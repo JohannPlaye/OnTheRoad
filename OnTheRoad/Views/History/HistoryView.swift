@@ -16,6 +16,7 @@ struct HistoryView: View {
                     .foregroundColor(.white.opacity(0.45))
             }
         }
-        .navigationBarHidden(true)
+        .navigationTitle("Historique")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
