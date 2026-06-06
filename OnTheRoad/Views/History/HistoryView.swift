@@ -1,22 +1,155 @@
 import SwiftUI
 
-// TODO: Phase 2 — HistoryView complète
 struct HistoryView: View {
+    @StateObject private var vm = HistoryViewModel()
+    @State private var selectedTrip: Trip?
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
-            VStack(spacing: 16) {
-                Image(systemName: "clock.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(LinearGradient.appAccent)
-                Text("Historique")
-                    .font(.title2.bold())
-                    .foregroundColor(.white)
-                Text("Bientôt disponible")
-                    .foregroundColor(.white.opacity(0.45))
+
+            VStack(spacing: 0) {
+                header
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
+
+                // Period picker
+                periodPicker
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+
+                if vm.trips.isEmpty {
+                    emptyState
+                } else {
+                    tripList
+                }
             }
         }
-        .navigationTitle("Historique")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(true)
+        .navigationDestination(item: $selectedTrip) { trip in
+            TripDetailView(trip: trip)
+                .onDisappear { vm.load() }
+        }
+        .onAppear { vm.load() }
+        .onChange(of: vm.period) { _, _ in vm.load() }
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(width: 40, height: 40)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Text("Historique")
+                .font(.title3.bold())
+                .foregroundColor(.white)
+
+            Spacer()
+
+            Color.clear.frame(width: 40, height: 40)
+        }
+    }
+
+    // MARK: - Period picker
+
+    private var periodPicker: some View {
+        HStack(spacing: 6) {
+            ForEach(HistoryPeriod.allCases) { p in
+                Button(p.rawValue) { vm.period = p }
+                    .font(.caption.bold())
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        vm.period == p
+                            ? AnyShapeStyle(LinearGradient.appAccentH)
+                            : AnyShapeStyle(Color.white.opacity(0.07))
+                    )
+                    .foregroundColor(vm.period == p ? .white : .white.opacity(0.55))
+                    .cornerRadius(10)
+                    .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Trip list
+
+    private var tripList: some View {
+        ScrollView {
+            LazyVStack(spacing: 20, pinnedViews: [.sectionHeaders]) {
+                ForEach(vm.groupedTrips, id: \.day) { group in
+                    Section {
+                        VStack(spacing: 8) {
+                            ForEach(group.trips, id: \.objectID) { trip in
+                                Button { selectedTrip = trip } label: {
+                                    TripRowView(trip: trip)
+                                }
+                                .buttonStyle(.plain)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        vm.delete(trip)
+                                    } label: {
+                                        Label("Supprimer", systemImage: "trash")
+                                    }
+                                }
+                            }
+                        }
+                    } header: {
+                        dayHeader(group.day)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 32)
+        }
+    }
+
+    private func dayHeader(_ date: Date) -> some View {
+        HStack {
+            Text(date.formatted(date: .complete, time: .omitted).capitalized)
+                .font(.caption.bold())
+                .foregroundColor(.white.opacity(0.5))
+                .textCase(.uppercase)
+            Spacer()
+
+            let dayTrips = vm.groupedTrips.first(where: { $0.day == date })?.trips ?? []
+            let dayKm = dayTrips.reduce(0) { $0 + $1.distance }
+            Text(String(format: "%.1f km", dayKm))
+                .font(.caption.bold())
+                .foregroundStyle(LinearGradient.appAccentH)
+        }
+        .padding(.vertical, 6)
+        .background(Color.appBackground)
+    }
+
+    // MARK: - Empty state
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "clock.badge.xmark")
+                .font(.system(size: 48))
+                .foregroundStyle(LinearGradient.appAccent)
+            Text("Aucun trajet")
+                .font(.title3.bold())
+                .foregroundColor(.white)
+            Text("Tes trajets apparaîtront ici après le premier enregistrement.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.4))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+            Spacer()
+        }
     }
 }

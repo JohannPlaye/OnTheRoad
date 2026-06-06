@@ -1,22 +1,133 @@
 import SwiftUI
 
-// TODO: Phase 3 — StatisticsView complète
 struct StatisticsView: View {
+    @StateObject private var vm = StatisticsViewModel()
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
-            VStack(spacing: 16) {
-                Image(systemName: "chart.bar.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(LinearGradient.appAccent)
-                Text("Statistiques")
-                    .font(.title2.bold())
-                    .foregroundColor(.white)
-                Text("Bientôt disponible")
-                    .foregroundColor(.white.opacity(0.45))
+
+            VStack(spacing: 0) {
+                header
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
+
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Global metrics
+                        globalGrid
+
+                        // Daily breakdown
+                        if !vm.dailyStats.isEmpty {
+                            dailySection
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 32)
+                }
             }
         }
-        .navigationTitle("Statistiques")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(true)
+        .onAppear { vm.load() }
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.headline).foregroundColor(.white)
+                    .frame(width: 40, height: 40)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            Text("Statistiques")
+                .font(.title3.bold()).foregroundColor(.white)
+            Spacer()
+            Color.clear.frame(width: 40)
+        }
+    }
+
+    // MARK: - Global grid
+
+    private var globalGrid: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                bigStat(icon: "road.lanes",
+                        value: String(format: "%.0f km", vm.totalDistance),
+                        label: "Distance totale",
+                        gradient: [.appPurple, .appCyan])
+                bigStat(icon: "car.fill",
+                        value: "\(vm.totalTripCount)",
+                        label: vm.totalTripCount == 1 ? "trajet" : "trajets",
+                        gradient: [.appCyan, .appGreen])
+            }
+            HStack(spacing: 10) {
+                bigStat(icon: "timer",
+                        value: vm.formattedTotalDuration,
+                        label: "Durée cumulée",
+                        gradient: [.appGreen, .appPurple])
+                bigStat(icon: "chart.line.uptrend.xyaxis",
+                        value: String(format: "%.1f km/j", vm.avgDistancePerDay),
+                        label: "Moyenne / jour",
+                        gradient: [.appPurple, .appGreen])
+            }
+        }
+    }
+
+    private func bigStat(icon: String, value: String, label: String, gradient: [Color]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+            Text(value)
+                .font(.title2.bold())
+                .foregroundColor(.white)
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.45))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
+    }
+
+    // MARK: - Daily breakdown
+
+    private var dailySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Jour par jour")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            ForEach(vm.dailyStats) { stat in
+                dayRow(stat)
+            }
+        }
+    }
+
+    private func dayRow(_ stat: DayStat) -> some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(stat.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+                Text("\(stat.tripCount) trajet\(stat.tripCount > 1 ? "s" : "")")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.45))
+            }
+            Spacer()
+            Text(String(format: "%.1f km", stat.distance))
+                .font(.subheadline.bold())
+                .foregroundStyle(LinearGradient.appAccentH)
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
 }
