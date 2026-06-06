@@ -7,7 +7,7 @@ struct FireworksView: UIViewRepresentable {
         let view = UIView()
         view.backgroundColor = .clear
         view.isUserInteractionEnabled = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             Self.launch(in: view)
         }
         return view
@@ -18,7 +18,9 @@ struct FireworksView: UIViewRepresentable {
     // MARK: - Fireworks
 
     static func launch(in view: UIView) {
-        let bounds = UIScreen.main.bounds
+        let bounds = view.bounds.isEmpty
+            ? CGRect(x: 0, y: 0, width: 390, height: 844)  // fallback iPhone size
+            : view.bounds
         let positions: [CGPoint] = [
             CGPoint(x: bounds.width * 0.25, y: bounds.height * 0.28),
             CGPoint(x: bounds.width * 0.75, y: bounds.height * 0.22),
