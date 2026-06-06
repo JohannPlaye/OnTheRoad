@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
