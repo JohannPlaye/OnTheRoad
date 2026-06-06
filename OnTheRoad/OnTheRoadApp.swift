@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct OnTheRoadApp: App {
+    let persistence = PersistenceController.shared
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
+                .environment(\.managedObjectContext, persistence.container.viewContext)
+                .preferredColorScheme(.dark)
         }
     }
 }
