@@ -28,10 +28,8 @@ struct StatisticsView: View {
                     .padding(.bottom, 32)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .background(NavigationBarHider())
-        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
         .onAppear { vm.load() }
     }
 
