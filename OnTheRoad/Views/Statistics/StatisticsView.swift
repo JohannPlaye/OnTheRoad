@@ -3,15 +3,16 @@ import SwiftUI
 struct StatisticsView: View {
     @StateObject private var vm = StatisticsViewModel()
     @Environment(\.dismiss) private var dismiss
+    @State private var statusBarTop: CGFloat = 59
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
                     .padding(.horizontal, 20)
-                    .padding(.top, 8)
+                    .padding(.top, statusBarTop + 8)
                     .padding(.bottom, 20)
 
                 ScrollView {
@@ -29,8 +30,14 @@ struct StatisticsView: View {
                 }
             }
         }
+        .ignoresSafeArea()
         .navigationBarHidden(true)
-        .onAppear { vm.load() }
+        .onAppear {
+            statusBarTop = UIApplication.shared.connectedScenes
+                .compactMap { ($0 as? UIWindowScene)?.statusBarManager?.statusBarFrame.height }
+                .first ?? 59
+            vm.load()
+        }
     }
 
     // MARK: - Header
