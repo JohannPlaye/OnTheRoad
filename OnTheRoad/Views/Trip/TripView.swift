@@ -158,7 +158,7 @@ struct TripView: View {
             VStack(spacing: 20) {
                 Image(systemName: "location.slash.fill")
                     .font(.system(size: 50))
-                    .foregroundStyle(LinearGradient.appAccent)
+                    .foregroundColor(.appPurple)
                 Text("Accès à la localisation refusé")
                     .font(.title3.bold())
                     .foregroundColor(.white)

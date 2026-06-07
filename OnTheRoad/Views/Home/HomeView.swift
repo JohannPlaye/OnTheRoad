@@ -58,7 +58,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("OnTheRoad")
                     .font(.title.bold())
-                    .foregroundStyle(LinearGradient.appAccentH)
+                    .foregroundColor(.appCyan)
                 Text(Date().formatted(date: .long, time: .omitted))
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.45))
@@ -66,7 +66,7 @@ struct HomeView: View {
             Spacer()
             Image(systemName: "car.fill")
                 .font(.title2)
-                .foregroundStyle(LinearGradient.appAccent)
+                .foregroundColor(.appPurple)
         }
     }
 
@@ -95,7 +95,7 @@ struct HomeView: View {
         VStack(spacing: 5) {
             Text(value)
                 .font(.title2.bold())
-                .foregroundStyle(LinearGradient.appAccentH)
+                .foregroundColor(.appCyan)
             Text(label)
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.45))
@@ -145,7 +145,7 @@ struct HomeView: View {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundStyle(LinearGradient.appAccentH)
+                    .foregroundColor(.appCyan)
                 Text(label)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.55))

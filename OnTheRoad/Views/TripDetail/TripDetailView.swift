@@ -110,7 +110,7 @@ struct TripDetailView: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundStyle(LinearGradient.appAccentH)
+                .foregroundColor(.appCyan)
             Text(value)
                 .font(.subheadline.bold())
                 .foregroundColor(.white)
@@ -131,7 +131,7 @@ struct TripDetailView: View {
     private func motifCard(_ motif: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "text.bubble.fill")
-                .foregroundStyle(LinearGradient.appAccentH)
+                .foregroundColor(.appCyan)
             Text(motif)
                 .foregroundColor(.white)
                 .font(.subheadline)

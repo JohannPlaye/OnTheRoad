@@ -25,6 +25,7 @@ struct ExportView: View {
             }
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear { vm.load() }
         .sheet(isPresented: $showShareSheet) {
             if !shareItems.isEmpty {
@@ -58,7 +59,7 @@ struct ExportView: View {
         VStack(spacing: 28) {
             Image(systemName: "doc.text.fill")
                 .font(.system(size: 56))
-                .foregroundStyle(LinearGradient.appAccent)
+                .foregroundColor(.appPurple)
 
             VStack(spacing: 8) {
                 Text("Export CSV")

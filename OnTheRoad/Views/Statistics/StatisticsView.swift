@@ -30,6 +30,7 @@ struct StatisticsView: View {
             }
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear { vm.load() }
     }
 
@@ -60,30 +61,30 @@ struct StatisticsView: View {
                 bigStat(icon: "road.lanes",
                         value: String(format: "%.0f km", vm.totalDistance),
                         label: "Distance totale",
-                        gradient: [.appPurple, .appCyan])
+                        color: .appPurple)
                 bigStat(icon: "car.fill",
                         value: "\(vm.totalTripCount)",
                         label: vm.totalTripCount == 1 ? "trajet" : "trajets",
-                        gradient: [.appCyan, .appGreen])
+                        color: .appCyan)
             }
             HStack(spacing: 10) {
                 bigStat(icon: "timer",
                         value: vm.formattedTotalDuration,
                         label: "Durée cumulée",
-                        gradient: [.appGreen, .appPurple])
+                        color: .appGreen)
                 bigStat(icon: "chart.line.uptrend.xyaxis",
                         value: String(format: "%.1f km/j", vm.avgDistancePerDay),
                         label: "Moyenne / jour",
-                        gradient: [.appPurple, .appGreen])
+                        color: .appCyan)
             }
         }
     }
 
-    private func bigStat(icon: String, value: String, label: String, gradient: [Color]) -> some View {
+    private func bigStat(icon: String, value: String, label: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+                .foregroundColor(color)
             Text(value)
                 .font(.title2.bold())
                 .foregroundColor(.white)
@@ -124,7 +125,7 @@ struct StatisticsView: View {
             Spacer()
             Text(String(format: "%.1f km", stat.distance))
                 .font(.subheadline.bold())
-                .foregroundStyle(LinearGradient.appAccentH)
+                .foregroundColor(.appCyan)
         }
         .padding(14)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))

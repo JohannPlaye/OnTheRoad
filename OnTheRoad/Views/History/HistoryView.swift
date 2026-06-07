@@ -72,7 +72,7 @@ struct HistoryView: View {
                     .padding(.vertical, 8)
                     .background(
                         vm.period == p
-                            ? AnyShapeStyle(LinearGradient.appAccentH)
+                            ? AnyShapeStyle(Color.appPurple)
                             : AnyShapeStyle(Color.white.opacity(0.07))
                     )
                     .foregroundColor(vm.period == p ? .white : .white.opacity(0.55))
@@ -127,7 +127,7 @@ struct HistoryView: View {
             let dayKm = dayTrips.reduce(0) { $0 + $1.distance }
             Text(String(format: "%.1f km", dayKm))
                 .font(.caption.bold())
-                .foregroundStyle(LinearGradient.appAccentH)
+                .foregroundColor(.appCyan)
         }
         .padding(.vertical, 6)
         .background(Color.appBackground)
@@ -140,7 +140,7 @@ struct HistoryView: View {
             Spacer()
             Image(systemName: "clock.badge.xmark")
                 .font(.system(size: 48))
-                .foregroundStyle(LinearGradient.appAccent)
+                .foregroundColor(.appPurple)
             Text("Aucun trajet")
                 .font(.title3.bold())
                 .foregroundColor(.white)
