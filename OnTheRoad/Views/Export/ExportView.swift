@@ -24,7 +24,7 @@ struct ExportView: View {
                 Spacer()
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { vm.load() }
         .sheet(isPresented: $showShareSheet) {
@@ -103,7 +103,7 @@ struct ExportView: View {
                 .background(
                     vm.tripCount == 0
                         ? AnyShapeStyle(Color.white.opacity(0.1))
-                        : AnyShapeStyle(LinearGradient.appAccentH)
+                        : AnyShapeStyle(Color.appPurple)
                 )
                 .cornerRadius(16)
                 .foregroundColor(vm.tripCount == 0 ? .white.opacity(0.3) : .white)

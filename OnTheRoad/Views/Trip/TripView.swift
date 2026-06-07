@@ -136,7 +136,7 @@ struct TripView: View {
             Button { vm.stopTrip() } label: {
                 ZStack {
                     Circle()
-                        .fill(LinearGradient.appAccent)
+                        .fill(Color.appPurple)
                         .frame(width: 80, height: 80)
                         .shadow(color: .appPurple.opacity(0.55), radius: 24)
                     Image(systemName: "stop.fill")
@@ -174,7 +174,7 @@ struct TripView: View {
                 }
                 .padding(.horizontal, 32)
                 .padding(.vertical, 14)
-                .background(LinearGradient.appAccentH)
+                .background(Color.appPurple)
                 .cornerRadius(14)
                 .foregroundColor(.white)
                 .font(.subheadline.bold())

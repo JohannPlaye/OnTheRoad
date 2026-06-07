@@ -29,7 +29,7 @@ struct StatisticsView: View {
                 }
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { vm.load() }
     }

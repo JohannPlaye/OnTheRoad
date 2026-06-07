@@ -109,7 +109,7 @@ struct HomeView: View {
         Button { navigateToTrip = true } label: {
             ZStack {
                 Circle()
-                    .fill(LinearGradient.appAccent)
+                    .fill(Color.appPurple)
                     .frame(width: 168, height: 168)
                     .shadow(color: .appPurple.opacity(0.55), radius: 36, x: 0, y: 12)
 
