@@ -66,7 +66,7 @@ struct HomeView: View {
             Spacer()
             Image(systemName: "car.fill")
                 .font(.title2)
-                .foregroundColor(.appPurple)
+                .foregroundColor(.white.opacity(0.7))
         }
     }
 
@@ -109,17 +109,17 @@ struct HomeView: View {
         Button { navigateToTrip = true } label: {
             ZStack {
                 Circle()
-                    .fill(Color.appPurple)
+                    .fill(Color.appCyan)
                     .frame(width: 168, height: 168)
-                    .shadow(color: .appPurple.opacity(0.55), radius: 36, x: 0, y: 12)
+                    .shadow(color: .appCyan.opacity(0.45), radius: 36, x: 0, y: 12)
 
                 VStack(spacing: 10) {
                     Image(systemName: "play.fill")
                         .font(.system(size: 42, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.appBackground)
                     Text("Démarrer")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.appBackground)
                 }
             }
         }

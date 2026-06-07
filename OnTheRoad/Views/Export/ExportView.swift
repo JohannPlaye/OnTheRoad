@@ -23,6 +23,7 @@ struct ExportView: View {
 
                 Spacer()
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -103,10 +104,10 @@ struct ExportView: View {
                 .background(
                     vm.tripCount == 0
                         ? AnyShapeStyle(Color.white.opacity(0.1))
-                        : AnyShapeStyle(Color.appPurple)
+                        : AnyShapeStyle(Color.appCyan)
                 )
                 .cornerRadius(16)
-                .foregroundColor(vm.tripCount == 0 ? .white.opacity(0.3) : .white)
+                .foregroundColor(vm.tripCount == 0 ? .white.opacity(0.3) : Color(red: 10/255, green: 22/255, blue: 42/255))
                 .font(.headline)
             }
             .buttonStyle(.plain)
