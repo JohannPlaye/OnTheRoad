@@ -3,24 +3,20 @@ import SwiftUI
 struct StatisticsView: View {
     @StateObject private var vm = StatisticsViewModel()
     @Environment(\.dismiss) private var dismiss
-    @State private var statusBarTop: CGFloat = 59
 
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack {
             Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
                     .padding(.horizontal, 20)
-                    .padding(.top, statusBarTop + 8)
-                    .padding(.bottom, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
 
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Global metrics
                         globalGrid
-
-                        // Daily breakdown
                         if !vm.dailyStats.isEmpty {
                             dailySection
                         }
@@ -30,14 +26,8 @@ struct StatisticsView: View {
                 }
             }
         }
-        .ignoresSafeArea()
         .navigationBarHidden(true)
-        .onAppear {
-            statusBarTop = UIApplication.shared.connectedScenes
-                .compactMap { ($0 as? UIWindowScene)?.statusBarManager?.statusBarFrame.height }
-                .first ?? 59
-            vm.load()
-        }
+        .onAppear { vm.load() }
     }
 
     // MARK: - Header

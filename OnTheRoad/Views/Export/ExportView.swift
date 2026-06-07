@@ -6,33 +6,27 @@ struct ExportView: View {
     @State private var shareItems: [Any] = []
     @State private var showShareSheet = false
     @State private var isGenerating = false
-    @State private var statusBarTop: CGFloat = 59
 
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack {
             Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
                     .padding(.horizontal, 20)
-                    .padding(.top, statusBarTop + 8)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
 
-                Spacer()
-
-                exportCard
-                    .padding(.horizontal, 24)
-
-                Spacer()
+                ScrollView {
+                    exportCard
+                        .padding(.horizontal, 24)
+                        .padding(.top, 32)
+                        .padding(.bottom, 32)
+                }
             }
         }
-        .ignoresSafeArea()
         .navigationBarHidden(true)
-        .onAppear {
-            statusBarTop = UIApplication.shared.connectedScenes
-                .compactMap { ($0 as? UIWindowScene)?.statusBarManager?.statusBarFrame.height }
-                .first ?? 59
-            vm.load()
-        }
+        .onAppear { vm.load() }
         .sheet(isPresented: $showShareSheet) {
             if !shareItems.isEmpty {
                 ShareSheet(items: shareItems)
