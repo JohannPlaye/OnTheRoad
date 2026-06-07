@@ -1,8 +1,6 @@
 import CoreData
 import CoreLocation
 
-extension Trip: Identifiable {}
-
 extension Trip {
 
     // MARK: - Computed properties
