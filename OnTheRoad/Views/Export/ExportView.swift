@@ -26,6 +26,7 @@ struct ExportView: View {
             }
         }
         .navigationBarHidden(true)
+        .background(NavBarHider())
         .onAppear { vm.load() }
         .sheet(isPresented: $showShareSheet) {
             if !shareItems.isEmpty {

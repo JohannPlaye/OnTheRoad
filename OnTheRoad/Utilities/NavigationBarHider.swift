@@ -1,14 +1,31 @@
 import SwiftUI
 import UIKit
 
-/// Forces the parent UINavigationController to hide its bar.
-/// Use as .background(NavigationBarHider()) when SwiftUI's toolbar modifiers
-/// don't reliably suppress the navigation bar on pushed views.
-struct NavigationBarHider: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        UIViewController()
+/// A zero-size UIView that walks the responder chain to find
+/// the parent UINavigationController and hides its bar.
+/// Use as .background(NavBarHider()) on pushed views.
+struct NavBarHider: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isHidden = true
+        return view
     }
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        uiViewController.navigationController?.setNavigationBarHidden(true, animated: false)
+
+    func updateUIView(_ view: UIView, context: Context) {
+        DispatchQueue.main.async {
+            view.nearestNavigationController?.setNavigationBarHidden(true, animated: false)
+        }
+    }
+}
+
+private extension UIView {
+    var nearestNavigationController: UINavigationController? {
+        var responder: UIResponder? = self.next
+        while let r = responder {
+            if let nav = r as? UINavigationController { return nav }
+            if let vc = r as? UIViewController { return vc.navigationController }
+            responder = r.next
+        }
+        return nil
     }
 }

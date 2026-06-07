@@ -27,6 +27,7 @@ struct StatisticsView: View {
             }
         }
         .navigationBarHidden(true)
+        .background(NavBarHider())
         .onAppear { vm.load() }
     }
 
