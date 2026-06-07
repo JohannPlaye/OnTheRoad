@@ -30,8 +30,8 @@ struct StatisticsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
+        .background(NavigationBarHider())
         .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
         .onAppear { vm.load() }
     }
 
