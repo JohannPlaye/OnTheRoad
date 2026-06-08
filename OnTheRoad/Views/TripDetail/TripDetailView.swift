@@ -148,7 +148,7 @@ struct TripDetailView: View {
         HStack(spacing: 0) {
             timestampItem(icon: "flag.fill",       color: .appGreen,  label: "Départ",  value: vm.trip.formattedStartTime)
             Rectangle().fill(Color.white.opacity(0.1)).frame(width: 1, height: 36)
-            timestampItem(icon: "flag.checkered",  color: .appPurple, label: "Arrivée", value: vm.trip.formattedEndTime)
+            timestampItem(icon: "flag.checkered",  color: .appPink, label: "Arrivée", value: vm.trip.formattedEndTime)
         }
         .padding(.vertical, 14)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))

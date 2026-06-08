@@ -76,7 +76,7 @@ struct TripDetailMapView: UIViewRepresentable {
                     .withTintColor(UIColor(red: 74/255, green: 222/255, blue: 128/255, alpha: 1),
                                    renderingMode: .alwaysOriginal)
                 : UIImage(systemName: "flag.checkered")?
-                    .withTintColor(UIColor(red: 240/255, green: 162/255, blue: 16/255, alpha: 1),
+                    .withTintColor(UIColor(red: 240/255, green: 16/255, blue: 94/255, alpha: 1),
                                    renderingMode: .alwaysOriginal)
             view.frame.size = CGSize(width: 28, height: 28)
             return view

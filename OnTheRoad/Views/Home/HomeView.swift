@@ -105,7 +105,7 @@ struct HomeView: View {
         VStack(spacing: 5) {
             Text(value)
                 .font(.title2.bold())
-                .foregroundColor(.white)
+                .foregroundColor(.appGreen)
             Text(label)
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.45))
