@@ -102,8 +102,6 @@ struct StatisticsView: View {
             }
             .buttonStyle(.plain)
 
-            Spacer()
-
             DatePicker("", selection: $vm.customStartDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .labelsHidden()
@@ -111,9 +109,13 @@ struct StatisticsView: View {
                 .disabled(!vm.isCustomPeriod)
                 .opacity(vm.isCustomPeriod ? 1 : 0.3)
 
+            Spacer()
+
             Text("→")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.4))
+
+            Spacer()
 
             DatePicker("", selection: $vm.customEndDate, in: vm.customStartDate..., displayedComponents: .date)
                 .datePickerStyle(.compact)

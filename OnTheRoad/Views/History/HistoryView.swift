@@ -3,6 +3,9 @@ import SwiftUI
 struct HistoryView: View {
     @StateObject private var vm = HistoryViewModel()
     @State private var selectedTrip: Trip?
+    @State private var shareItems: [Any] = []
+    @State private var showShareSheet = false
+    @State private var isExporting = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -30,6 +33,10 @@ struct HistoryView: View {
                 } else {
                     tripList
                 }
+
+                exportButton
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
             }
         }
         .navigationBarHidden(true)
@@ -42,6 +49,11 @@ struct HistoryView: View {
         .onChange(of: vm.isCustomPeriod)  { _, _ in vm.load() }
         .onChange(of: vm.customStartDate) { _, _ in if vm.isCustomPeriod { vm.load() } }
         .onChange(of: vm.customEndDate)   { _, _ in if vm.isCustomPeriod { vm.load() } }
+        .sheet(isPresented: $showShareSheet) {
+            if !shareItems.isEmpty {
+                ShareSheet(items: shareItems)
+            }
+        }
     }
 
     // MARK: - Header
@@ -112,9 +124,6 @@ struct HistoryView: View {
             }
             .buttonStyle(.plain)
 
-            Spacer()
-
-            // Date pickers (only interactive when custom period is active)
             DatePicker("", selection: $vm.customStartDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .labelsHidden()
@@ -122,9 +131,13 @@ struct HistoryView: View {
                 .disabled(!vm.isCustomPeriod)
                 .opacity(vm.isCustomPeriod ? 1 : 0.3)
 
+            Spacer()
+
             Text("→")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.4))
+
+            Spacer()
 
             DatePicker("", selection: $vm.customEndDate, in: vm.customStartDate..., displayedComponents: .date)
                 .datePickerStyle(.compact)
@@ -184,6 +197,46 @@ struct HistoryView: View {
         }
         .padding(.vertical, 6)
         .background(Color.appBackground)
+    }
+
+    // MARK: - Export button
+
+    private var exportButton: some View {
+        Button {
+            guard !vm.trips.isEmpty else { return }
+            isExporting = true
+            DispatchQueue.global(qos: .userInitiated).async {
+                let url = vm.csvFileURL()
+                DispatchQueue.main.async {
+                    isExporting = false
+                    if let url {
+                        shareItems = [url]
+                        showShareSheet = true
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                if isExporting {
+                    ProgressView().tint(.white)
+                } else {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                Text(vm.trips.isEmpty ? "Aucun trajet" : "Exporter et partager")
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 17)
+            .background(
+                vm.trips.isEmpty
+                    ? AnyShapeStyle(Color.white.opacity(0.1))
+                    : AnyShapeStyle(Color.appCyan)
+            )
+            .cornerRadius(16)
+            .foregroundColor(vm.trips.isEmpty ? .white.opacity(0.3) : Color(red: 10/255, green: 22/255, blue: 42/255))
+            .font(.headline)
+        }
+        .buttonStyle(.plain)
+        .disabled(vm.trips.isEmpty || isExporting)
     }
 
     // MARK: - Empty state
