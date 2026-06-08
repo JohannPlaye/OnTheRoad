@@ -6,6 +6,8 @@ struct TripDetailView: View {
     @State private var showDeleteConfirm = false
     @State private var shareItems: [Any] = []
     @State private var showShareSheet = false
+    @State private var isEditingMotif = false
+    @State private var motifDraft = ""
 
     init(trip: Trip) {
         _vm = StateObject(wrappedValue: TripDetailViewModel(trip: trip))
@@ -34,10 +36,8 @@ struct TripDetailView: View {
                         .padding(.horizontal, 20)
 
                     // Motif
-                    if let motif = vm.trip.motif, !motif.isEmpty {
-                        motifCard(motif)
-                            .padding(.horizontal, 20)
-                    }
+                    motifCard
+                        .padding(.horizontal, 20)
 
                     // Timestamps
                     timestampCard
@@ -128,18 +128,58 @@ struct TripDetailView: View {
 
     // MARK: - Motif
 
-    private func motifCard(_ motif: String) -> some View {
+    private var motifCard: some View {
         HStack(spacing: 12) {
             Image(systemName: "text.bubble.fill")
                 .foregroundColor(.appCyan)
-            Text(motif)
-                .foregroundColor(.white)
-                .font(.subheadline)
-            Spacer()
+
+            if isEditingMotif {
+                TextField("Motif du trajet", text: $motifDraft)
+                    .foregroundColor(.white)
+                    .font(.subheadline)
+                    .tint(.appCyan)
+                    .submitLabel(.done)
+                    .onSubmit { commitMotif() }
+                Spacer()
+                Button { commitMotif() } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.appGreen)
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+                Button { isEditingMotif = false } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.white.opacity(0.4))
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text(vm.trip.motif?.isEmpty == false ? vm.trip.motif! : "Aucun motif")
+                    .foregroundColor(vm.trip.motif?.isEmpty == false ? .white : .white.opacity(0.35))
+                    .font(.subheadline)
+                Spacer()
+                Button {
+                    motifDraft = vm.trip.motif ?? ""
+                    isEditingMotif = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.appPurple)
+                        .font(.subheadline.bold())
+                        .frame(width: 32, height: 32)
+                        .background(Color.appPurple.opacity(0.15), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .animation(.easeInOut(duration: 0.2), value: isEditingMotif)
+    }
+
+    private func commitMotif() {
+        vm.saveMotif(motifDraft)
+        isEditingMotif = false
     }
 
     // MARK: - Timestamps

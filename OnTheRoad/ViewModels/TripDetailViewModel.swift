@@ -15,6 +15,12 @@ final class TripDetailViewModel: ObservableObject {
         try? context.save()
     }
 
+    func saveMotif(_ newMotif: String) {
+        trip.motif = newMotif.trimmingCharacters(in: .whitespaces).isEmpty ? nil : newMotif.trimmingCharacters(in: .whitespaces)
+        try? context.save()
+        objectWillChange.send()
+    }
+
     func csvString() -> String {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy/MM/dd-HH:mm:ss"

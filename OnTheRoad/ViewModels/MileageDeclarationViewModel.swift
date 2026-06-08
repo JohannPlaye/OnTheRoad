@@ -74,6 +74,43 @@ final class MileageDeclarationViewModel: ObservableObject {
         return fmt.string(from: date).capitalized
     }
 
+    // MARK: - Chronological validation
+
+    /// Returns the declared entry with the highest sortKey that is still < targetKey
+    private func previousEntry(excludingKey targetKey: Int) -> MileageDeclaration? {
+        declarations
+            .filter { $0.sortKey < targetKey }
+            .max(by: { $0.sortKey < $1.sortKey })
+    }
+
+    /// Returns the declared entry with the lowest sortKey that is still > targetKey
+    private func nextEntry(excludingKey targetKey: Int) -> MileageDeclaration? {
+        declarations
+            .filter { $0.sortKey > targetKey }
+            .min(by: { $0.sortKey < $1.sortKey })
+    }
+
+    /// Validates km against adjacent declared months. Returns an error string or nil.
+    private func chronologicalError(km: Double, month: Int, year: Int,
+                                    excludingObjectID: NSManagedObjectID? = nil) -> String? {
+        let targetKey = year * 100 + month
+        let prevDecl  = declarations.filter {
+            $0.sortKey < targetKey && $0.objectID != excludingObjectID
+        }.max(by: { $0.sortKey < $1.sortKey })
+
+        let nextDecl  = declarations.filter {
+            $0.sortKey > targetKey && $0.objectID != excludingObjectID
+        }.min(by: { $0.sortKey < $1.sortKey })
+
+        if let prev = prevDecl, km < prev.kilometers {
+            return "Le kilométrage doit être ≥ \(Int(prev.kilometers)) km (\(prev.formattedMonthYear))."
+        }
+        if let next = nextDecl, km > next.kilometers {
+            return "Le kilométrage doit être ≤ \(Int(next.kilometers)) km (\(next.formattedMonthYear))."
+        }
+        return nil
+    }
+
     // MARK: - Add
 
     func prepareAdd() {
@@ -91,6 +128,10 @@ final class MileageDeclarationViewModel: ObservableObject {
         guard let km = Double(newKilometers.replacingOccurrences(of: ",", with: ".")),
               km >= 0 else {
             errorMessage = "Kilométrage invalide."
+            return
+        }
+        if let err = chronologicalError(km: km, month: newMonth, year: newYear) {
+            errorMessage = err
             return
         }
         let entry = MileageDeclaration(context: context)
@@ -112,10 +153,21 @@ final class MileageDeclarationViewModel: ObservableObject {
         showEditConfirm = true
     }
 
+    // Published error for edit (shown in alert message)
+    var editError: String? = nil
+
     func confirmEdit() {
         guard let entry = editingEntry,
               let km = Double(editKilometers.replacingOccurrences(of: ",", with: ".")),
               km >= 0 else { return }
+        if let err = chronologicalError(km: km,
+                                        month: Int(entry.month),
+                                        year:  Int(entry.year),
+                                        excludingObjectID: entry.objectID) {
+            editError = err
+            return
+        }
+        editError        = nil
         entry.kilometers = km
         try? context.save()
         showEditConfirm = false

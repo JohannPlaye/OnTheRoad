@@ -156,9 +156,10 @@ struct HomeView: View {
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 8)
+                .frame(width: mainWidth, alignment: .center)
+                .frame(maxHeight: .infinity)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
                 .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
-                .frame(width: mainWidth)
 
                 // 1/3 — Déclaration km
                 HStack(spacing: 0) {
@@ -166,9 +167,10 @@ struct HomeView: View {
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 8)
+                .frame(width: declWidth, alignment: .center)
+                .frame(maxHeight: .infinity)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
                 .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
-                .frame(width: declWidth)
             }
         }
         .frame(height: 70)

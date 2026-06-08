@@ -41,9 +41,14 @@ struct MileageDeclarationView: View {
             Button("Annuler", role: .cancel) {
                 vm.showEditConfirm = false
                 vm.editingEntry    = nil
+                vm.editError       = nil
             }
         } message: { entry in
-            Text("Modifier le kilométrage déclaré pour \(entry.formattedMonthYear)")
+            if let err = vm.editError {
+                Text(err)
+            } else {
+                Text("Modifier le kilométrage déclaré pour \(entry.formattedMonthYear)")
+            }
         }
     }
 
