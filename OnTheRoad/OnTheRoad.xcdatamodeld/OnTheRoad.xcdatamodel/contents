@@ -12,6 +12,7 @@
         <attribute name="startLatitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="startLongitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="startTime" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="project" optional="YES" attributeType="String"/>
     </entity>
     <entity name="MileageDeclaration" representedClassName="MileageDeclaration" syncable="YES" codeGenerationType="class">
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>

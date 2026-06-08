@@ -53,6 +53,33 @@ struct TripSummaryModal: View {
                         .submitLabel(.done)
                 }
 
+                // Project picker (required)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Projet (obligatoire)")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.5))
+                    Menu {
+                        ForEach(TripProject.allCases) { project in
+                            Button(project.rawValue) {
+                                vm.selectedProject = project
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(vm.selectedProject?.rawValue ?? "Sélectionner un projet…")
+                                .foregroundColor(vm.selectedProject == nil ? .white.opacity(0.35) : .white)
+                                .font(.subheadline)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                        .padding(14)
+                        .background(Color.white.opacity(0.07))
+                        .cornerRadius(14)
+                    }
+                }
+
                 // Action buttons
                 HStack(spacing: 12) {
                     Button("Abandonner") { onDiscard() }
@@ -66,10 +93,11 @@ struct TripSummaryModal: View {
                     Button("Enregistrer") { onSave() }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 15)
-                        .background(Color.appGreen)
+                        .background(vm.selectedProject == nil ? Color.white.opacity(0.15) : Color.appGreen)
                         .cornerRadius(15)
-                        .foregroundColor(Color.appBackground)
+                        .foregroundColor(vm.selectedProject == nil ? .white.opacity(0.3) : Color.appBackground)
                         .font(.subheadline.bold())
+                        .disabled(vm.selectedProject == nil)
                 }
             }
             .padding(28)

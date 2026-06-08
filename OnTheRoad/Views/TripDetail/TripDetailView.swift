@@ -39,6 +39,12 @@ struct TripDetailView: View {
                     motifCard
                         .padding(.horizontal, 20)
 
+                    // Project
+                    if let project = vm.trip.project, !project.isEmpty {
+                        projectCard(project)
+                            .padding(.horizontal, 20)
+                    }
+
                     // Timestamps
                     timestampCard
                         .padding(.horizontal, 20)
@@ -180,6 +186,22 @@ struct TripDetailView: View {
     private func commitMotif() {
         vm.saveMotif(motifDraft)
         isEditingMotif = false
+    }
+
+    // MARK: - Project
+
+    private func projectCard(_ project: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "folder.fill")
+                .foregroundColor(.appOrange)
+            Text(project)
+                .foregroundColor(.white)
+                .font(.subheadline)
+            Spacer()
+        }
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
     }
 
     // MARK: - Timestamps

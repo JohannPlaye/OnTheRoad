@@ -36,17 +36,18 @@ final class HistoryViewModel: ObservableObject {
         guard !trips.isEmpty else { return nil }
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy/MM/dd-HH:mm:ss"
-        var rows = ["Date départ;Date arrivée;Motif;Distance (km);Lat départ;Long départ;Lat arrivée;Long arrivée"]
+        var rows = ["Date départ;Date arrivée;Motif;Projet;Distance (km);Lat départ;Long départ;Lat arrivée;Long arrivée"]
         for trip in trips.sorted(by: { ($0.startTime ?? Date()) < ($1.startTime ?? Date()) }) {
-            let start = fmt.string(from: trip.startTime ?? Date())
-            let end   = fmt.string(from: trip.endTime   ?? Date())
-            let motif = trip.motif ?? ""
-            let dist  = frenchNumber(trip.distance,       decimals: 3)
-            let sLat  = frenchNumber(trip.startLatitude,  decimals: 6)
-            let sLon  = frenchNumber(trip.startLongitude, decimals: 6)
-            let eLat  = frenchNumber(trip.endLatitude,    decimals: 6)
-            let eLon  = frenchNumber(trip.endLongitude,   decimals: 6)
-            rows.append("\(start);\(end);\(motif);\(dist);\(sLat);\(sLon);\(eLat);\(eLon)")
+            let start   = fmt.string(from: trip.startTime ?? Date())
+            let end     = fmt.string(from: trip.endTime   ?? Date())
+            let motif   = trip.motif   ?? ""
+            let project = trip.project ?? ""
+            let dist    = frenchNumber(trip.distance,       decimals: 3)
+            let sLat    = frenchNumber(trip.startLatitude,  decimals: 6)
+            let sLon    = frenchNumber(trip.startLongitude, decimals: 6)
+            let eLat    = frenchNumber(trip.endLatitude,    decimals: 6)
+            let eLon    = frenchNumber(trip.endLongitude,   decimals: 6)
+            rows.append("\(start);\(end);\(motif);\(project);\(dist);\(sLat);\(sLon);\(eLat);\(eLon)")
         }
         let csv = "\u{FEFF}" + rows.joined(separator: "\n")
         let url = FileManager.default.temporaryDirectory
