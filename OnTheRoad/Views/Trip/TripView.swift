@@ -136,7 +136,7 @@ struct TripView: View {
             Button { vm.stopTrip() } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.appPurple)
+                        .fill(Color.appGreen)
                         .frame(width: 80, height: 80)
                         .shadow(color: .appPurple.opacity(0.55), radius: 24)
                     Image(systemName: "stop.fill")

@@ -14,7 +14,7 @@ struct TripSummaryModal: View {
                 VStack(spacing: 6) {
                     Image(systemName: "flag.checkered")
                         .font(.system(size: 36))
-                        .foregroundStyle(LinearGradient.appAccent)
+                        .foregroundColor(.appGreen)
                     Text("Trajet terminé !")
                         .font(.title2.bold())
                         .foregroundColor(.white)
@@ -66,9 +66,9 @@ struct TripSummaryModal: View {
                     Button("Enregistrer") { onSave() }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 15)
-                        .background(LinearGradient.appAccentH)
+                        .background(Color.appGreen)
                         .cornerRadius(15)
-                        .foregroundColor(.white)
+                        .foregroundColor(Color.appBackground)
                         .font(.subheadline.bold())
                 }
             }
@@ -83,7 +83,7 @@ struct TripSummaryModal: View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.subheadline)
-                .foregroundStyle(LinearGradient.appAccentH)
+                .foregroundColor(.appCyan)
             Text(value)
                 .font(.subheadline.bold())
                 .foregroundColor(.white)
