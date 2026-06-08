@@ -74,18 +74,21 @@ struct HistoryView: View {
     private var periodPicker: some View {
         HStack(spacing: 6) {
             ForEach(HistoryPeriod.allCases) { p in
-                Button(p.rawValue) { vm.period = p }
-                    .font(.caption.bold())
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        vm.period == p
-                            ? AnyShapeStyle(Color.appGreen)
-                            : AnyShapeStyle(Color.white.opacity(0.07))
-                    )
-                    .foregroundColor(vm.period == p ? .white : .white.opacity(0.55))
-                    .cornerRadius(10)
-                    .buttonStyle(.plain)
+                Button(p.rawValue) {
+                    vm.isCustomPeriod = false
+                    vm.period = p
+                }
+                .font(.caption.bold())
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    vm.period == p && !vm.isCustomPeriod
+                        ? AnyShapeStyle(Color.appGreen)
+                        : AnyShapeStyle(Color.white.opacity(0.07))
+                )
+                .foregroundColor(vm.period == p && !vm.isCustomPeriod ? .white : .white.opacity(0.55))
+                .cornerRadius(10)
+                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,17 +102,13 @@ struct HistoryView: View {
             Button {
                 vm.isCustomPeriod.toggle()
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: vm.isCustomPeriod ? "calendar.badge.checkmark" : "calendar")
-                        .font(.caption.bold())
-                    Text("Période manuelle")
-                        .font(.caption.bold())
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(vm.isCustomPeriod ? AnyShapeStyle(Color.appCyan) : AnyShapeStyle(Color.white.opacity(0.07)))
-                .foregroundColor(vm.isCustomPeriod ? Color.appBackground : .white.opacity(0.55))
-                .cornerRadius(10)
+                Image(systemName: vm.isCustomPeriod ? "calendar.badge.checkmark" : "calendar")
+                    .font(.caption.bold())
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(vm.isCustomPeriod ? AnyShapeStyle(Color.appCyan) : AnyShapeStyle(Color.white.opacity(0.07)))
+                    .foregroundColor(vm.isCustomPeriod ? Color.appBackground : .white.opacity(0.55))
+                    .cornerRadius(10)
             }
             .buttonStyle(.plain)
 
