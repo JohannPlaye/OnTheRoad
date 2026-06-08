@@ -66,27 +66,37 @@ struct HomeView: View {
             Spacer()
             Image(systemName: "car.fill")
                 .font(.title2)
-                .foregroundColor(.appPink)
+                .foregroundColor(.appGreen)
         }
     }
 
     // MARK: - Today stats card
 
     private var todayCard: some View {
-        HStack(spacing: 0) {
-            statItem(
-                value: "\(vm.todayTripCount)",
-                label: vm.todayTripCount == 1 ? "trajet" : "trajets"
-            )
-            Rectangle()
-                .fill(Color.white.opacity(0.12))
-                .frame(width: 1, height: 40)
-            statItem(
-                value: String(format: "%.1f km", vm.todayDistance),
-                label: "aujourd'hui"
-            )
+        VStack(spacing: 0) {
+            Text("Aujourd'hui")
+                .font(.caption.bold())
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+
+            HStack(spacing: 0) {
+                statItem(
+                    value: "\(vm.todayTripCount)",
+                    label: vm.todayTripCount == 1 ? "trajet" : "trajets"
+                )
+                Rectangle()
+                    .fill(Color.white.opacity(0.12))
+                    .frame(width: 1, height: 40)
+                statItem(
+                    value: String(format: "%.1f", vm.todayDistance),
+                    label: "km"
+                )
+            }
+            .padding(.bottom, 20)
         }
-        .padding(.vertical, 20)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
         .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
     }
@@ -95,7 +105,7 @@ struct HomeView: View {
         VStack(spacing: 5) {
             Text(value)
                 .font(.title2.bold())
-                .foregroundColor(.white)
+                .foregroundColor(.appPink)
             Text(label)
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.45))

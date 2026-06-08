@@ -60,7 +60,7 @@ struct ExportView: View {
         VStack(spacing: 28) {
             Image(systemName: "doc.text.fill")
                 .font(.system(size: 56))
-                .foregroundColor(.appOrange)
+                .foregroundColor(.appPink)
 
             VStack(spacing: 8) {
                 Text("Export CSV")
