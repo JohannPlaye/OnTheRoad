@@ -21,27 +21,28 @@ final class TripDetailViewModel: ObservableObject {
         objectWillChange.send()
     }
 
-    func csvString() -> String {
+    func csvFileURL() -> URL? {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy/MM/dd-HH:mm:ss"
-        let start = fmt.string(from: trip.startTime ?? Date())
-        let end   = fmt.string(from: trip.endTime   ?? Date())
-        let motif = trip.motif ?? ""
-        let dist  = frenchNumber(trip.distance,    decimals: 3)
-        let sLat  = frenchNumber(trip.startLatitude,  decimals: 6)
-        let sLon  = frenchNumber(trip.startLongitude, decimals: 6)
-        let eLat  = frenchNumber(trip.endLatitude,    decimals: 6)
-        let eLon  = frenchNumber(trip.endLongitude,   decimals: 6)
-        let header = "Date départ;Date arrivée;Motif;Distance (km);Lat départ;Long départ;Lat arrivée;Long arrivée"
-        let row    = "\(start);\(end);\(motif);\(dist);\(sLat);\(sLon);\(eLat);\(eLon)"
-        return "\u{FEFF}\(header)\n\(row)"
-    }
 
-    func csvFileURL() -> URL? {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("trajet-\(trip.id?.uuidString ?? "export").csv")
-        try? csvString().write(to: url, atomically: true, encoding: .utf8)
-        return url
+        let headers = ["Date départ", "Date arrivée", "Motif", "Projet",
+                       "Distance (km)", "Lat départ", "Long départ", "Lat arrivée", "Long arrivée"]
+        let row: [String] = [
+            fmt.string(from: trip.startTime ?? Date()),
+            fmt.string(from: trip.endTime   ?? Date()),
+            trip.motif   ?? "",
+            trip.project ?? "",
+            frenchNumber(trip.distance,       decimals: 3),
+            frenchNumber(trip.startLatitude,  decimals: 6),
+            frenchNumber(trip.startLongitude, decimals: 6),
+            frenchNumber(trip.endLatitude,    decimals: 6),
+            frenchNumber(trip.endLongitude,   decimals: 6),
+        ]
+
+        return XLSXWriter.fileURL(filename: "trajet-\(trip.id?.uuidString ?? "export").xlsx",
+                                  sheetName: "Trajet",
+                                  headers: headers,
+                                  rows: [row])
     }
 
     // MARK: - Private

@@ -207,7 +207,7 @@ struct HistoryView: View {
             guard !vm.trips.isEmpty else { return }
             isExporting = true
             DispatchQueue.global(qos: .userInitiated).async {
-                let url = vm.csvFileURL()
+                let url = vm.xlsxFileURL()
                 DispatchQueue.main.async {
                     isExporting = false
                     if let url {

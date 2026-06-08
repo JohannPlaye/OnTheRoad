@@ -12,7 +12,7 @@ final class ExportViewModel: ObservableObject {
         tripCount = (try? context.count(for: request)) ?? 0
     }
 
-    func csvFileURL() -> URL? {
+    func xlsxFileURL() -> URL? {
         let request = Trip.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Trip.startTime, ascending: true)]
         guard let trips = try? context.fetch(request) else { return nil }
@@ -20,26 +20,27 @@ final class ExportViewModel: ObservableObject {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy/MM/dd-HH:mm:ss"
 
-        var rows = ["Date départ;Date arrivée;Motif;Projet;Distance (km);Lat départ;Long départ;Lat arrivée;Long arrivée"]
+        let headers = ["Date départ", "Date arrivée", "Motif", "Projet",
+                       "Distance (km)", "Lat départ", "Long départ", "Lat arrivée", "Long arrivée"]
 
-        for trip in trips {
-            let start   = fmt.string(from: trip.startTime ?? Date())
-            let end     = fmt.string(from: trip.endTime   ?? Date())
-            let motif   = trip.motif   ?? ""
-            let project = trip.project ?? ""
-            let dist    = frenchNumber(trip.distance,       decimals: 3)
-            let sLat    = frenchNumber(trip.startLatitude,  decimals: 6)
-            let sLon    = frenchNumber(trip.startLongitude, decimals: 6)
-            let eLat    = frenchNumber(trip.endLatitude,    decimals: 6)
-            let eLon    = frenchNumber(trip.endLongitude,   decimals: 6)
-            rows.append("\(start);\(end);\(motif);\(project);\(dist);\(sLat);\(sLon);\(eLat);\(eLon)")
+        let rows: [[String]] = trips.map { trip in
+            [
+                fmt.string(from: trip.startTime ?? Date()),
+                fmt.string(from: trip.endTime   ?? Date()),
+                trip.motif   ?? "",
+                trip.project ?? "",
+                frenchNumber(trip.distance,       decimals: 3),
+                frenchNumber(trip.startLatitude,  decimals: 6),
+                frenchNumber(trip.startLongitude, decimals: 6),
+                frenchNumber(trip.endLatitude,    decimals: 6),
+                frenchNumber(trip.endLongitude,   decimals: 6),
+            ]
         }
 
-        let csv = "\u{FEFF}" + rows.joined(separator: "\n")
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("OnTheRoad-export.csv")
-        try? csv.write(to: url, atomically: true, encoding: .utf8)
-        return url
+        return XLSXWriter.fileURL(filename: "OnTheRoad-export.xlsx",
+                                  sheetName: "Trajets",
+                                  headers: headers,
+                                  rows: rows)
     }
 
     private func frenchNumber(_ value: Double, decimals: Int) -> String {

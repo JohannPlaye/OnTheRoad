@@ -32,28 +32,34 @@ final class HistoryViewModel: ObservableObject {
         load()
     }
 
-    func csvFileURL() -> URL? {
+    func xlsxFileURL() -> URL? {
         guard !trips.isEmpty else { return nil }
+
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy/MM/dd-HH:mm:ss"
-        var rows = ["Date départ;Date arrivée;Motif;Projet;Distance (km);Lat départ;Long départ;Lat arrivée;Long arrivée"]
-        for trip in trips.sorted(by: { ($0.startTime ?? Date()) < ($1.startTime ?? Date()) }) {
-            let start   = fmt.string(from: trip.startTime ?? Date())
-            let end     = fmt.string(from: trip.endTime   ?? Date())
-            let motif   = trip.motif   ?? ""
-            let project = trip.project ?? ""
-            let dist    = frenchNumber(trip.distance,       decimals: 3)
-            let sLat    = frenchNumber(trip.startLatitude,  decimals: 6)
-            let sLon    = frenchNumber(trip.startLongitude, decimals: 6)
-            let eLat    = frenchNumber(trip.endLatitude,    decimals: 6)
-            let eLon    = frenchNumber(trip.endLongitude,   decimals: 6)
-            rows.append("\(start);\(end);\(motif);\(project);\(dist);\(sLat);\(sLon);\(eLat);\(eLon)")
+
+        let headers = ["Date départ", "Date arrivée", "Motif", "Projet",
+                       "Distance (km)", "Lat départ", "Long départ", "Lat arrivée", "Long arrivée"]
+
+        let sorted = trips.sorted { ($0.startTime ?? Date()) < ($1.startTime ?? Date()) }
+        let rows: [[String]] = sorted.map { trip in
+            [
+                fmt.string(from: trip.startTime ?? Date()),
+                fmt.string(from: trip.endTime   ?? Date()),
+                trip.motif   ?? "",
+                trip.project ?? "",
+                frenchNumber(trip.distance,       decimals: 3),
+                frenchNumber(trip.startLatitude,  decimals: 6),
+                frenchNumber(trip.startLongitude, decimals: 6),
+                frenchNumber(trip.endLatitude,    decimals: 6),
+                frenchNumber(trip.endLongitude,   decimals: 6),
+            ]
         }
-        let csv = "\u{FEFF}" + rows.joined(separator: "\n")
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("OnTheRoad-historique.csv")
-        try? csv.write(to: url, atomically: true, encoding: .utf8)
-        return url
+
+        return XLSXWriter.fileURL(filename: "OnTheRoad-historique.xlsx",
+                                  sheetName: "Trajets",
+                                  headers: headers,
+                                  rows: rows)
     }
 
     private func frenchNumber(_ value: Double, decimals: Int) -> String {

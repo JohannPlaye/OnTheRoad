@@ -63,7 +63,7 @@ struct ExportView: View {
                 .foregroundColor(.appPink)
 
             VStack(spacing: 8) {
-                Text("Export CSV")
+                Text("Export Excel")
                     .font(.title2.bold())
                     .foregroundColor(.white)
                 Text("\(vm.tripCount) trajet\(vm.tripCount == 1 ? "" : "s") à exporter")
@@ -72,16 +72,16 @@ struct ExportView: View {
             }
 
             // Format info
-            infoRow(icon: "textformat",         text: "Encodage UTF-8 avec BOM")
-            infoRow(icon: "list.bullet",         text: "Séparateur point-virgule (;)")
+            infoRow(icon: "tablecells",         text: "Format .xlsx (Excel)")
             infoRow(icon: "number",             text: "Décimales avec virgule (format FR)")
+            infoRow(icon: "tag",                text: "Motif et projet inclus")
             infoRow(icon: "location.fill",      text: "Coordonnées GPS départ et arrivée")
 
             Button {
                 guard vm.tripCount > 0 else { return }
                 isGenerating = true
                 DispatchQueue.global(qos: .userInitiated).async {
-                    let url = vm.csvFileURL()
+                    let url = vm.xlsxFileURL()
                     DispatchQueue.main.async {
                         isGenerating = false
                         if let url {
