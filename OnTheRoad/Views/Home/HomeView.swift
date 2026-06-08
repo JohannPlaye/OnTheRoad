@@ -142,12 +142,11 @@ struct HomeView: View {
         HStack(spacing: 0) {
             navItem(icon: "clock.fill",                 label: "Historique")  { navigateToHistory = true }
             navItem(icon: "chart.bar.fill",             label: "Stats")       { navigateToStats = true }
-            navItem(icon: "square.and.arrow.up.fill",   label: "Exporter")    { navigateToExport = true }
         }
         .padding(.vertical, 14)
         .padding(.horizontal, 8)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .background(Color.appGreen.opacity(0.5), in: RoundedRectangle(cornerRadius: 22))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.appGreen, lineWidth: 1))
     }
 
     private func navItem(icon: String, label: String, action: @escaping () -> Void) -> some View {
