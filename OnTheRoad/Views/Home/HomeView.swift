@@ -156,8 +156,7 @@ struct HomeView: View {
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 8)
-                .frame(width: mainWidth, alignment: .center)
-                .frame(maxHeight: .infinity)
+                .frame(width: mainWidth, height: proxy.size.height)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
                 .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
 
@@ -167,8 +166,7 @@ struct HomeView: View {
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 8)
-                .frame(width: declWidth, alignment: .center)
-                .frame(maxHeight: .infinity)
+                .frame(width: declWidth, height: proxy.size.height)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
                 .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
             }
@@ -185,6 +183,8 @@ struct HomeView: View {
                 Text(label)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.55))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .frame(maxWidth: .infinity)
         }
