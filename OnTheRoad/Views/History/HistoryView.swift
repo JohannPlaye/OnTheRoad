@@ -18,6 +18,11 @@ struct HistoryView: View {
                 // Period picker
                 periodPicker
                     .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
+
+                // Custom date range
+                customRangePicker
+                    .padding(.horizontal, 20)
                     .padding(.bottom, 16)
 
                 if vm.trips.isEmpty {
@@ -33,7 +38,10 @@ struct HistoryView: View {
                 .onDisappear { vm.load() }
         }
         .onAppear { vm.load() }
-        .onChange(of: vm.period) { _, _ in vm.load() }
+        .onChange(of: vm.period)          { _, _ in vm.load() }
+        .onChange(of: vm.isCustomPeriod)  { _, _ in vm.load() }
+        .onChange(of: vm.customStartDate) { _, _ in if vm.isCustomPeriod { vm.load() } }
+        .onChange(of: vm.customEndDate)   { _, _ in if vm.isCustomPeriod { vm.load() } }
     }
 
     // MARK: - Header
@@ -81,6 +89,52 @@ struct HistoryView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Custom range picker
+
+    private var customRangePicker: some View {
+        HStack(spacing: 8) {
+            // Toggle button
+            Button {
+                vm.isCustomPeriod.toggle()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: vm.isCustomPeriod ? "calendar.badge.checkmark" : "calendar")
+                        .font(.caption.bold())
+                    Text("Période manuelle")
+                        .font(.caption.bold())
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(vm.isCustomPeriod ? AnyShapeStyle(Color.appCyan) : AnyShapeStyle(Color.white.opacity(0.07)))
+                .foregroundColor(vm.isCustomPeriod ? Color.appBackground : .white.opacity(0.55))
+                .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            // Date pickers (only interactive when custom period is active)
+            DatePicker("", selection: $vm.customStartDate, displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .colorScheme(.dark)
+                .disabled(!vm.isCustomPeriod)
+                .opacity(vm.isCustomPeriod ? 1 : 0.3)
+
+            Text("→")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.4))
+
+            DatePicker("", selection: $vm.customEndDate, in: vm.customStartDate..., displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .colorScheme(.dark)
+                .disabled(!vm.isCustomPeriod)
+                .opacity(vm.isCustomPeriod ? 1 : 0.3)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Trip list

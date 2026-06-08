@@ -3,15 +3,18 @@ import CoreData
 import Foundation
 
 enum HistoryPeriod: String, CaseIterable, Identifiable {
+    case all    = "Tous"
     case today  = "Aujourd'hui"
     case week   = "Semaine"
     case month  = "Mois"
-    case all    = "Tous"
     var id: String { rawValue }
 }
 
 final class HistoryViewModel: ObservableObject {
-    @Published var period: HistoryPeriod = .all
+    @Published var period: HistoryPeriod = .month
+    @Published var isCustomPeriod: Bool = false
+    @Published var customStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date())!
+    @Published var customEndDate: Date = Date()
     @Published var trips: [Trip] = []
 
     private let context = PersistenceController.shared.container.viewContext
@@ -19,7 +22,7 @@ final class HistoryViewModel: ObservableObject {
     func load() {
         let request = Trip.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Trip.startTime, ascending: false)]
-        request.predicate = predicate(for: period)
+        request.predicate = isCustomPeriod ? customPredicate() : predicate(for: period)
         trips = (try? context.fetch(request)) ?? []
     }
 
@@ -42,6 +45,13 @@ final class HistoryViewModel: ObservableObject {
     }
 
     // MARK: - Private
+
+    private func customPredicate() -> NSPredicate {
+        let start = Calendar.current.startOfDay(for: customStartDate)
+        let end   = Calendar.current.date(byAdding: .day, value: 1,
+                                          to: Calendar.current.startOfDay(for: customEndDate))!
+        return NSPredicate(format: "date >= %@ AND date < %@", start as NSDate, end as NSDate)
+    }
 
     private func predicate(for period: HistoryPeriod) -> NSPredicate? {
         let calendar = Calendar.current

@@ -11,6 +11,11 @@ struct DayStat: Identifiable {
 }
 
 final class StatisticsViewModel: ObservableObject {
+    @Published var period: HistoryPeriod = .month
+    @Published var isCustomPeriod: Bool = false
+    @Published var customStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date())!
+    @Published var customEndDate: Date = Date()
+
     @Published var totalDistance: Double = 0
     @Published var totalTripCount: Int = 0
     @Published var totalDuration: TimeInterval = 0
@@ -22,6 +27,7 @@ final class StatisticsViewModel: ObservableObject {
     func load() {
         let request = Trip.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Trip.date, ascending: false)]
+        request.predicate = isCustomPeriod ? customPredicate() : predicate(for: period)
         guard let trips = try? context.fetch(request), !trips.isEmpty else {
             totalDistance = 0; totalTripCount = 0; totalDuration = 0
             avgDistancePerDay = 0; dailyStats = []
@@ -52,6 +58,34 @@ final class StatisticsViewModel: ObservableObject {
         }
 
         avgDistancePerDay = dailyStats.isEmpty ? 0 : totalDistance / Double(dailyStats.count)
+    }
+
+    // MARK: - Private
+
+    private func customPredicate() -> NSPredicate {
+        let start = Calendar.current.startOfDay(for: customStartDate)
+        let end   = Calendar.current.date(byAdding: .day, value: 1,
+                                          to: Calendar.current.startOfDay(for: customEndDate))!
+        return NSPredicate(format: "date >= %@ AND date < %@", start as NSDate, end as NSDate)
+    }
+
+    private func predicate(for period: HistoryPeriod) -> NSPredicate? {
+        let calendar = Calendar.current
+        let now = Date()
+        switch period {
+        case .today:
+            let start = calendar.startOfDay(for: now)
+            let end   = calendar.date(byAdding: .day, value: 1, to: start)!
+            return NSPredicate(format: "date >= %@ AND date < %@", start as NSDate, end as NSDate)
+        case .week:
+            let start = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))!
+            return NSPredicate(format: "date >= %@", start as NSDate)
+        case .month:
+            let start = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+            return NSPredicate(format: "date >= %@", start as NSDate)
+        case .all:
+            return nil
+        }
     }
 
     // MARK: - Formatted helpers

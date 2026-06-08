@@ -14,6 +14,14 @@ struct StatisticsView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 16)
 
+                periodPicker
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
+
+                customRangePicker
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+
                 ScrollView {
                     VStack(spacing: 16) {
                         globalGrid
@@ -29,6 +37,10 @@ struct StatisticsView: View {
         .navigationBarHidden(true)
         .background(NavBarHider())
         .onAppear { vm.load() }
+        .onChange(of: vm.period)          { _, _ in vm.load() }
+        .onChange(of: vm.isCustomPeriod)  { _, _ in vm.load() }
+        .onChange(of: vm.customStartDate) { _, _ in if vm.isCustomPeriod { vm.load() } }
+        .onChange(of: vm.customEndDate)   { _, _ in if vm.isCustomPeriod { vm.load() } }
     }
 
     // MARK: - Header
@@ -48,6 +60,70 @@ struct StatisticsView: View {
             Spacer()
             Color.clear.frame(width: 40, height: 40)
         }
+    }
+
+    // MARK: - Period picker
+
+    private var periodPicker: some View {
+        HStack(spacing: 6) {
+            ForEach(HistoryPeriod.allCases) { p in
+                Button(p.rawValue) { vm.period = p }
+                    .font(.caption.bold())
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        vm.period == p && !vm.isCustomPeriod
+                            ? AnyShapeStyle(Color.appGreen)
+                            : AnyShapeStyle(Color.white.opacity(0.07))
+                    )
+                    .foregroundColor(vm.period == p && !vm.isCustomPeriod ? .white : .white.opacity(0.55))
+                    .cornerRadius(10)
+                    .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var customRangePicker: some View {
+        HStack(spacing: 8) {
+            Button {
+                vm.isCustomPeriod.toggle()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: vm.isCustomPeriod ? "calendar.badge.checkmark" : "calendar")
+                        .font(.caption.bold())
+                    Text("Période manuelle")
+                        .font(.caption.bold())
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(vm.isCustomPeriod ? AnyShapeStyle(Color.appCyan) : AnyShapeStyle(Color.white.opacity(0.07)))
+                .foregroundColor(vm.isCustomPeriod ? Color.appBackground : .white.opacity(0.55))
+                .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            DatePicker("", selection: $vm.customStartDate, displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .colorScheme(.dark)
+                .disabled(!vm.isCustomPeriod)
+                .opacity(vm.isCustomPeriod ? 1 : 0.3)
+
+            Text("→")
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.4))
+
+            DatePicker("", selection: $vm.customEndDate, in: vm.customStartDate..., displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .colorScheme(.dark)
+                .disabled(!vm.isCustomPeriod)
+                .opacity(vm.isCustomPeriod ? 1 : 0.3)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Global grid
