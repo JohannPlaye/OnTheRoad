@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var navigateToHistory = false
     @State private var navigateToStats = false
     @State private var navigateToExport = false
+    @State private var navigateToDeclare = false
 
     var body: some View {
         NavigationStack {
@@ -27,7 +28,7 @@ struct HomeView: View {
 
                     Spacer()
 
-                    bottomNav
+                    bottomNavArea
                         .padding(.bottom, 8)
                 }
                 .padding(.horizontal, 24)
@@ -46,6 +47,9 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $navigateToExport) {
                 ExportView()
+            }
+            .navigationDestination(isPresented: $navigateToDeclare) {
+                MileageDeclarationView()
             }
         }
         .onAppear { vm.refresh() }
@@ -138,15 +142,36 @@ struct HomeView: View {
 
     // MARK: - Bottom nav
 
-    private var bottomNav: some View {
-        HStack(spacing: 0) {
-            navItem(icon: "clock.fill",                 label: "Historique")  { navigateToHistory = true }
-            navItem(icon: "chart.bar.fill",             label: "Stats")       { navigateToStats = true }
+    private var bottomNavArea: some View {
+        GeometryReader { proxy in
+            let spacing: CGFloat = 8
+            let mainWidth  = (proxy.size.width - spacing) * 2/3
+            let declWidth  = (proxy.size.width - spacing) * 1/3
+
+            HStack(spacing: spacing) {
+                // 2/3 — Historique + Stats
+                HStack(spacing: 0) {
+                    navItem(icon: "clock.fill",      label: "Historique") { navigateToHistory = true }
+                    navItem(icon: "chart.bar.fill",  label: "Stats")      { navigateToStats   = true }
+                }
+                .padding(.vertical, 14)
+                .padding(.horizontal, 8)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
+                .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .frame(width: mainWidth)
+
+                // 1/3 — Déclaration km
+                HStack(spacing: 0) {
+                    navItem(icon: "list.bullet.clipboard", label: "Déclaration km") { navigateToDeclare = true }
+                }
+                .padding(.vertical, 14)
+                .padding(.horizontal, 8)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
+                .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
+                .frame(width: declWidth)
+            }
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 8)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .frame(height: 70)
     }
 
     private func navItem(icon: String, label: String, action: @escaping () -> Void) -> some View {
