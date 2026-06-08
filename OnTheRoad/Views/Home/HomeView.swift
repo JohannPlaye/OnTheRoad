@@ -145,8 +145,8 @@ struct HomeView: View {
         }
         .padding(.vertical, 14)
         .padding(.horizontal, 8)
-        .background(Color.appGreen.opacity(0.5), in: RoundedRectangle(cornerRadius: 22))
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.appGreen, lineWidth: 1))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.1), lineWidth: 1))
     }
 
     private func navItem(icon: String, label: String, action: @escaping () -> Void) -> some View {
@@ -154,7 +154,11 @@ struct HomeView: View {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(.appRedDark)
+                    .foregroundColor(.appPink)
+                    .padding(10)
+                    .background(Color.appGreen.opacity(0.5))
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.appGreen, lineWidth: 1))
                 Text(label)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.55))
