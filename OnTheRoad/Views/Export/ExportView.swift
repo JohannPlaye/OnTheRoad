@@ -50,7 +50,7 @@ struct ExportView: View {
             Text("Exporter")
                 .font(.title3.bold()).foregroundColor(.white)
             Spacer()
-            Color.clear.frame(width: 40)
+            Color.clear.frame(width: 40, height: 40)
         }
     }
 
