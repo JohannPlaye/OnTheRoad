@@ -58,7 +58,7 @@ struct StatisticsView: View {
                 bigStat(icon: "road.lanes",
                         value: String(format: "%.0f km", vm.totalDistance),
                         label: "Distance totale",
-                        color: .appPurple)
+                        color: .appGreen)
                 bigStat(icon: "car.fill",
                         value: "\(vm.totalTripCount)",
                         label: vm.totalTripCount == 1 ? "trajet" : "trajets",

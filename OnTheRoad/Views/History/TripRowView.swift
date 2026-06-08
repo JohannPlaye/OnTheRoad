@@ -17,7 +17,7 @@ struct TripRowView: View {
             .frame(width: 54, alignment: .leading)
 
             Rectangle()
-                .fill(LinearGradient.appAccent)
+                .fill(Color.appPink)
                 .frame(width: 2)
                 .cornerRadius(1)
 
@@ -30,7 +30,7 @@ struct TripRowView: View {
                 if let motif = trip.motif, !motif.isEmpty {
                     Text(motif)
                         .font(.caption)
-                        .foregroundColor(.appPurple)
+                        .foregroundColor(.appPink)
                         .lineLimit(1)
                 }
             }

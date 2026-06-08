@@ -66,7 +66,7 @@ struct HomeView: View {
             Spacer()
             Image(systemName: "car.fill")
                 .font(.title2)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(.appPink)
         }
     }
 
@@ -95,7 +95,7 @@ struct HomeView: View {
         VStack(spacing: 5) {
             Text(value)
                 .font(.title2.bold())
-                .foregroundColor(.appCyan)
+                .foregroundColor(.white)
             Text(label)
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.45))
@@ -145,7 +145,7 @@ struct HomeView: View {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(.appCyan)
+                    .foregroundColor(.appPink)
                 Text(label)
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.55))

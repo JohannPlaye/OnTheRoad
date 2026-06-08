@@ -30,7 +30,7 @@ struct TripMapView: UIViewRepresentable {
                 return MKOverlayRenderer(overlay: overlay)
             }
             let renderer = MKPolylineRenderer(polyline: polyline)
-            renderer.strokeColor = UIColor(red: 192/255, green: 132/255, blue: 252/255, alpha: 1)
+            renderer.strokeColor = UIColor(red: 240/255, green: 16/255, blue: 94/255, alpha: 1)
             renderer.lineWidth   = 5
             renderer.lineCap     = .round
             renderer.lineJoin    = .round
