@@ -21,6 +21,12 @@ final class TripDetailViewModel: ObservableObject {
         objectWillChange.send()
     }
 
+    func saveProject(_ project: TripProject?) {
+        trip.project = project?.rawValue
+        try? context.save()
+        objectWillChange.send()
+    }
+
     func csvFileURL() -> URL? {
         let fmt = DateFormatter()
         fmt.dateFormat = "yyyy/MM/dd-HH:mm:ss"

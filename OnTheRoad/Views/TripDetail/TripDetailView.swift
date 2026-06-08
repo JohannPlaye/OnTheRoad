@@ -8,6 +8,7 @@ struct TripDetailView: View {
     @State private var showShareSheet = false
     @State private var isEditingMotif = false
     @State private var motifDraft = ""
+    @State private var isEditingProject = false
 
     init(trip: Trip) {
         _vm = StateObject(wrappedValue: TripDetailViewModel(trip: trip))
@@ -40,10 +41,8 @@ struct TripDetailView: View {
                         .padding(.horizontal, 20)
 
                     // Project
-                    if let project = vm.trip.project, !project.isEmpty {
-                        projectCard(project)
-                            .padding(.horizontal, 20)
-                    }
+                    projectCard(vm.trip.project ?? "")
+                        .padding(.horizontal, 20)
 
                     // Timestamps
                     timestampCard
@@ -191,17 +190,62 @@ struct TripDetailView: View {
     // MARK: - Project
 
     private func projectCard(_ project: String) -> some View {
-        HStack(spacing: 12) {
+        let hasProject = !project.isEmpty
+        return HStack(spacing: 12) {
             Image(systemName: "folder.fill")
                 .foregroundColor(.appOrange)
-            Text(project)
-                .foregroundColor(.white)
-                .font(.subheadline)
-            Spacer()
+
+            if isEditingProject {
+                Menu {
+                    ForEach(TripProject.allCases) { p in
+                        Button(p.rawValue) {
+                            vm.saveProject(p)
+                            isEditingProject = false
+                        }
+                    }
+                    if hasProject {
+                        Divider()
+                        Button("Aucun projet", role: .destructive) {
+                            vm.saveProject(nil)
+                            isEditingProject = false
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(hasProject ? project : "Sélectionner un projet…")
+                            .foregroundColor(hasProject ? .white : .white.opacity(0.35))
+                            .font(.subheadline)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                }
+                Spacer()
+                Button { isEditingProject = false } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.white.opacity(0.4))
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text(hasProject ? project : "Aucun projet")
+                    .foregroundColor(hasProject ? .white : .white.opacity(0.35))
+                    .font(.subheadline)
+                Spacer()
+                Button { isEditingProject = true } label: {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.appPurple)
+                        .font(.subheadline.bold())
+                        .frame(width: 32, height: 32)
+                        .background(Color.appPurple.opacity(0.15), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .animation(.easeInOut(duration: 0.2), value: isEditingProject)
     }
 
     // MARK: - Timestamps
