@@ -154,7 +154,7 @@ struct HomeView: View {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(.appPink)
+                    .foregroundColor(.appGreen)
                     .padding(10)
                     .background(Color.appGreen.opacity(0.5))
                     .clipShape(Circle())
