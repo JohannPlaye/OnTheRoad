@@ -44,8 +44,8 @@ struct ManualTripView: View {
         }
         .navigationBarHidden(true)
         .onChange(of: vm.isSaved) { _, saved in if saved { dismiss() } }
-        // Ferme le clavier si on tape en dehors des champs
         .onTapGesture { focusedField = nil }
+        .onAppear { vm.fetchCurrentLocationAsDeparture() }
     }
 
     // MARK: - Header
@@ -91,6 +91,18 @@ struct ManualTripView: View {
                     .onChange(of: vm.departureQuery) { _, val in
                         vm.onDepartureQueryChange(val)
                     }
+                if vm.isLocating {
+                    ProgressView().tint(.appCyan).scaleEffect(0.8)
+                } else {
+                    Button {
+                        vm.clearDeparture()
+                        vm.fetchCurrentLocationAsDeparture()
+                    } label: {
+                        Image(systemName: "location.fill")
+                            .font(.subheadline)
+                            .foregroundColor(.appCyan)
+                    }.buttonStyle(.plain)
+                }
                 if !vm.departureQuery.isEmpty {
                     Button { vm.clearDeparture(); focusedField = .departure } label: {
                         Image(systemName: "xmark.circle.fill").foregroundColor(.white.opacity(0.35))

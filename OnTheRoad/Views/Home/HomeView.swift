@@ -154,17 +154,18 @@ struct HomeView: View {
             HStack(spacing: 8) {
                 Image(systemName: "map")
                     .font(.subheadline)
+                    .foregroundColor(.appGreen)
                 Text("Saisir un trajet manuellement")
                     .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
             }
-            .foregroundColor(.white.opacity(0.6))
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(.ultraThinMaterial, in: Capsule())
             .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .padding(.top, 16)
+        .padding(.top, 32)
     }
 
     // MARK: - Bottom nav

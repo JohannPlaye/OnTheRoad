@@ -2,8 +2,9 @@ import SwiftUI
 import MapKit
 import CoreData
 import Combine
+import CoreLocation
 
-final class ManualTripViewModel: ObservableObject {
+final class ManualTripViewModel: NSObject, ObservableObject {
 
     // MARK: - Address search
 
@@ -67,6 +68,10 @@ final class ManualTripViewModel: ObservableObject {
     var formattedDeparture: String { timeFormatter.string(from: departureDateTime) }
     var formattedArrival:   String { timeFormatter.string(from: arrivalDateTime)   }
 
+    // MARK: - Current location
+
+    @Published var isLocating = false
+
     // MARK: - Save state
 
     @Published var isSaved = false
@@ -79,6 +84,8 @@ final class ManualTripViewModel: ObservableObject {
     private var arrivalSearch:   MKLocalSearch?
     private var directions:      MKDirections?
     private var searchWorkItem:  DispatchWorkItem?
+    private var oneShotManager:  CLLocationManager?
+    private let geocoder = CLGeocoder()
 
     private let timeFormatter: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "HH:mm"; return f
@@ -152,6 +159,43 @@ final class ManualTripViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Current location as departure
+
+    /// Demande la position courante (one-shot) et la définit comme point de départ.
+    func fetchCurrentLocationAsDeparture() {
+        // Si on a déjà une valeur récente dans LocationManager, on l'utilise directement
+        if let loc = LocationManager.shared.currentLocation {
+            reverseGeocode(loc); return
+        }
+        isLocating = true
+        let mgr = CLLocationManager()
+        mgr.delegate = self
+        mgr.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        oneShotManager = mgr          // retain
+        if mgr.authorizationStatus == .notDetermined {
+            mgr.requestWhenInUseAuthorization()
+        } else {
+            mgr.requestLocation()
+        }
+    }
+
+    private func reverseGeocode(_ location: CLLocation) {
+        isLocating = true
+        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, _ in
+            DispatchQueue.main.async {
+                self?.isLocating = false
+                guard let self, let placemark = placemarks?.first else { return }
+                let mkPlacemark = MKPlacemark(placemark: placemark)
+                let item = MKMapItem(placemark: mkPlacemark)
+                item.name = [placemark.name, placemark.locality]
+                    .compactMap { $0 }.joined(separator: ", ")
+                self.selectedDeparture = item
+                self.departureQuery    = item.name ?? placemark.name ?? ""
+                self.tryCalculateRoute()
+            }
+        }
+    }
+
     // MARK: - Save
 
     func save() {
@@ -221,5 +265,29 @@ final class ManualTripViewModel: ObservableObject {
         let timeComps = cal.dateComponents([.hour, .minute], from: time)
         comps.hour = timeComps.hour; comps.minute = timeComps.minute; comps.second = 0
         return cal.date(from: comps) ?? date
+    }
+}
+
+// MARK: - CLLocationManagerDelegate
+
+extension ManualTripViewModel: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        oneShotManager = nil          // libère après usage
+        guard let loc = locations.last else { isLocating = false; return }
+        reverseGeocode(loc)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        DispatchQueue.main.async { self.isLocating = false }
+        oneShotManager = nil
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus == .authorizedWhenInUse ||
+           manager.authorizationStatus == .authorizedAlways {
+            manager.requestLocation()
+        } else {
+            DispatchQueue.main.async { self.isLocating = false }
+        }
     }
 }
