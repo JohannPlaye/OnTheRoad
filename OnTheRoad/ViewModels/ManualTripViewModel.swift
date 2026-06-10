@@ -244,6 +244,16 @@ final class ManualTripViewModel: NSObject, ObservableObject {
     private func performSearch(query: String, isDeparture: Bool) {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
+        request.resultTypes = [.address, .pointOfInterest]
+
+        // Centrer la recherche sur la position courante pour obtenir plus de résultats pertinents
+        if let loc = LocationManager.shared.currentLocation {
+            request.region = MKCoordinateRegion(
+                center: loc.coordinate,
+                latitudinalMeters: 100_000,
+                longitudinalMeters: 100_000
+            )
+        }
 
         // Retain strongly — same reason as MKDirections
         let search = MKLocalSearch(request: request)
@@ -252,7 +262,7 @@ final class ManualTripViewModel: NSObject, ObservableObject {
 
         search.start { [weak self] response, _ in
             DispatchQueue.main.async {
-                let items = Array((response?.mapItems ?? []).prefix(6))
+                let items = Array((response?.mapItems ?? []).prefix(5))
                 if isDeparture { self?.departureResults = items }
                 else           { self?.arrivalResults   = items }
             }

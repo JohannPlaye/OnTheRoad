@@ -66,41 +66,24 @@ struct ManualTripView: View {
         }
     }
 
-    // MARK: - Address card
+    // MARK: - Address card + dropdowns
 
     private var addressCard: some View {
         VStack(spacing: 0) {
-            departureFieldSection
-            Divider().background(Color.white.opacity(0.08))
-            arrivalFieldSection
-        }
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
-    }
-
-    // MARK: Departure field + results
-
-    private var departureFieldSection: some View {
-        VStack(spacing: 0) {
+            // Champ départ
             HStack(spacing: 12) {
                 Image(systemName: "flag.fill")
                     .foregroundColor(.appGreen).frame(width: 20)
                 TextField("Adresse de départ", text: $vm.departureQuery)
                     .foregroundColor(.white).tint(.appCyan).font(.subheadline)
                     .focused($focusedField, equals: .departure)
-                    .onChange(of: vm.departureQuery) { _, val in
-                        vm.onDepartureQueryChange(val)
-                    }
+                    .onChange(of: vm.departureQuery) { _, val in vm.onDepartureQueryChange(val) }
                 if vm.isLocating {
                     ProgressView().tint(.appCyan).scaleEffect(0.8)
                 } else {
-                    Button {
-                        vm.clearDeparture()
-                        vm.fetchCurrentLocationAsDeparture()
-                    } label: {
+                    Button { vm.clearDeparture(); vm.fetchCurrentLocationAsDeparture() } label: {
                         Image(systemName: "location.fill")
-                            .font(.subheadline)
-                            .foregroundColor(.appCyan)
+                            .font(.subheadline).foregroundColor(.appCyan)
                     }.buttonStyle(.plain)
                 }
                 if !vm.departureQuery.isEmpty {
@@ -111,29 +94,16 @@ struct ManualTripView: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
 
-            if focusedField == .departure && !vm.departureResults.isEmpty {
-                Divider().background(Color.white.opacity(0.06))
-                resultsList(items: vm.departureResults) { item in
-                    focusedField = nil
-                    vm.selectDeparture(item)
-                }
-            }
-        }
-    }
+            Divider().background(Color.white.opacity(0.08))
 
-    // MARK: Arrival field + results
-
-    private var arrivalFieldSection: some View {
-        VStack(spacing: 0) {
+            // Champ arrivée
             HStack(spacing: 12) {
                 Image(systemName: "flag.checkered")
                     .foregroundColor(.appPink).frame(width: 20)
                 TextField("Adresse d'arrivée", text: $vm.arrivalQuery)
                     .foregroundColor(.white).tint(.appCyan).font(.subheadline)
                     .focused($focusedField, equals: .arrival)
-                    .onChange(of: vm.arrivalQuery) { _, val in
-                        vm.onArrivalQueryChange(val)
-                    }
+                    .onChange(of: vm.arrivalQuery) { _, val in vm.onArrivalQueryChange(val) }
                 if !vm.arrivalQuery.isEmpty {
                     Button { vm.clearArrival(); focusedField = .arrival } label: {
                         Image(systemName: "xmark.circle.fill").foregroundColor(.white.opacity(0.35))
@@ -142,43 +112,73 @@ struct ManualTripView: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
 
+            // Dropdown départ — à l'intérieur de la carte, sans hauteur fixe
+            if focusedField == .departure && !vm.departureResults.isEmpty {
+                Divider().background(Color.white.opacity(0.12))
+                resultsDropdown(items: vm.departureResults) { item in
+                    focusedField = nil
+                    vm.selectDeparture(item)
+                }
+            }
+
+            // Dropdown arrivée
             if focusedField == .arrival && !vm.arrivalResults.isEmpty {
-                Divider().background(Color.white.opacity(0.06))
-                resultsList(items: vm.arrivalResults) { item in
+                Divider().background(Color.white.opacity(0.12))
+                resultsDropdown(items: vm.arrivalResults) { item in
                     focusedField = nil
                     vm.selectArrival(item)
                 }
             }
         }
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .animation(.easeInOut(duration: 0.18), value: focusedField)
+        .animation(.easeInOut(duration: 0.18), value: vm.departureResults.count)
+        .animation(.easeInOut(duration: 0.18), value: vm.arrivalResults.count)
     }
 
-    // MARK: Results list
+    // MARK: - Results dropdown
 
-    private func resultsList(items: [MKMapItem], onSelect: @escaping (MKMapItem) -> Void) -> some View {
+    private func resultsDropdown(items: [MKMapItem],
+                                 onSelect: @escaping (MKMapItem) -> Void) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
-                Button { onSelect(item) } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "mappin")
-                            .font(.caption).foregroundColor(.appCyan).frame(width: 16)
-                        VStack(alignment: .leading, spacing: 2) {
+                Button {
+                    onSelect(item)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.subheadline)
+                            .foregroundColor(.appCyan)
+                            .frame(width: 22)
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(item.name ?? "")
-                                .font(.subheadline).foregroundColor(.white)
+                                .font(.subheadline)
+                                .foregroundColor(.white)
                                 .lineLimit(1)
-                            if let sub = item.placemark.title, sub != item.name {
+                            if let sub = item.placemark.title,
+                               !sub.isEmpty, sub != item.name {
                                 Text(sub)
-                                    .font(.caption2).foregroundColor(.white.opacity(0.45))
+                                    .font(.caption2)
+                                    .foregroundColor(.white.opacity(0.45))
                                     .lineLimit(1)
                             }
                         }
                         Spacer()
+                        Image(systemName: "arrow.up.left")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.2))
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+
                 if idx < items.count - 1 {
-                    Divider().background(Color.white.opacity(0.05)).padding(.leading, 42)
+                    Divider()
+                        .background(Color.white.opacity(0.06))
+                        .padding(.leading, 50)
                 }
             }
         }
