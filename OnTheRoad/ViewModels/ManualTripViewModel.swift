@@ -6,12 +6,12 @@ import CoreLocation
 
 final class ManualTripViewModel: NSObject, ObservableObject {
 
-    // MARK: - Address search
+    // MARK: - Address search (completions pour l'autocomplétion temps réel)
 
-    @Published var departureQuery   = ""
-    @Published var arrivalQuery     = ""
-    @Published var departureResults: [MKMapItem] = []
-    @Published var arrivalResults:   [MKMapItem] = []
+    @Published var departureQuery       = ""
+    @Published var arrivalQuery         = ""
+    @Published var departureCompletions: [MKLocalSearchCompletion] = []
+    @Published var arrivalCompletions:   [MKLocalSearchCompletion] = []
     @Published var selectedDeparture: MKMapItem?
     @Published var selectedArrival:   MKMapItem?
 
@@ -31,7 +31,7 @@ final class ManualTripViewModel: NSObject, ObservableObject {
 
     @Published var motif = ""
     @Published var selectedProject: TripProject?
-    @Published var tripDate  = Date()
+    @Published var tripDate   = Date()
     @Published var timeMode: TimeMode = .departure
     @Published var anchorTime = Date()
 
@@ -77,53 +77,107 @@ final class ManualTripViewModel: NSObject, ObservableObject {
     @Published var isSaved = false
     var canSave: Bool { selectedRoute != nil && selectedProject != nil }
 
-    // MARK: - Private — retain MKLocalSearch & MKDirections strongly
+    // MARK: - Private
 
     private let context = PersistenceController.shared.container.viewContext
+
+    // MKLocalSearchCompleter — l'API d'autocomplétion temps réel (comme Apple Plans)
+    private let departureCompleter = MKLocalSearchCompleter()
+    private let arrivalCompleter   = MKLocalSearchCompleter()
+
+    // Résolution d'une complétion en MKMapItem
     private var departureSearch: MKLocalSearch?
     private var arrivalSearch:   MKLocalSearch?
-    private var directions:      MKDirections?
-    private var searchWorkItem:  DispatchWorkItem?
-    private var oneShotManager:  CLLocationManager?
+
+    // Calcul d'itinéraire
+    private var directions: MKDirections?
+
+    // Géolocalisation one-shot
+    private var oneShotManager: CLLocationManager?
     private let geocoder = CLGeocoder()
 
     private let timeFormatter: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "HH:mm"; return f
     }()
 
-    // MARK: - Search
+    override init() {
+        super.init()
+        configureCompleter(departureCompleter)
+        configureCompleter(arrivalCompleter)
+        departureCompleter.delegate = self
+        arrivalCompleter.delegate   = self
+    }
+
+    private func configureCompleter(_ c: MKLocalSearchCompleter) {
+        c.resultTypes = .address
+        // Région autour de la position actuelle si disponible
+        if let loc = LocationManager.shared.currentLocation {
+            c.region = MKCoordinateRegion(
+                center: loc.coordinate,
+                latitudinalMeters: 200_000,
+                longitudinalMeters: 200_000
+            )
+        }
+    }
+
+    // MARK: - Search (frappe clavier → completer)
 
     func onDepartureQueryChange(_ query: String) {
-        if query.isEmpty { departureResults = []; return }
-        scheduleSearch(query: query, isDeparture: true)
+        if query.isEmpty { departureCompletions = []; return }
+        departureCompleter.queryFragment = query
     }
 
     func onArrivalQueryChange(_ query: String) {
-        if query.isEmpty { arrivalResults = []; return }
-        scheduleSearch(query: query, isDeparture: false)
+        if query.isEmpty { arrivalCompletions = []; return }
+        arrivalCompleter.queryFragment = query
     }
 
-    func selectDeparture(_ item: MKMapItem) {
-        selectedDeparture = item
-        departureQuery    = item.name ?? item.placemark.title ?? ""
-        departureResults  = []
-        tryCalculateRoute()
+    // MARK: - Sélection d'une complétion → résolution en MKMapItem
+
+    func selectDeparture(completion: MKLocalSearchCompletion) {
+        departureQuery       = completion.title
+        departureCompletions = []
+        resolveCompletion(completion, isDeparture: true)
     }
 
-    func selectArrival(_ item: MKMapItem) {
-        selectedArrival = item
-        arrivalQuery    = item.name ?? item.placemark.title ?? ""
-        arrivalResults  = []
-        tryCalculateRoute()
+    func selectArrival(completion: MKLocalSearchCompletion) {
+        arrivalQuery       = completion.title
+        arrivalCompletions = []
+        resolveCompletion(completion, isDeparture: false)
     }
+
+    private func resolveCompletion(_ completion: MKLocalSearchCompletion, isDeparture: Bool) {
+        let request = MKLocalSearch.Request(completion: completion)
+        let search  = MKLocalSearch(request: request)
+        if isDeparture { departureSearch = search }
+        else           { arrivalSearch   = search }
+
+        search.start { [weak self] response, _ in
+            DispatchQueue.main.async {
+                guard let self, let item = response?.mapItems.first else { return }
+                if isDeparture {
+                    self.selectedDeparture = item
+                } else {
+                    self.selectedArrival = item
+                }
+                self.tryCalculateRoute()
+            }
+        }
+    }
+
+    // MARK: - Clear
 
     func clearDeparture() {
-        selectedDeparture = nil; departureQuery = ""; departureResults = []
+        selectedDeparture    = nil
+        departureQuery       = ""
+        departureCompletions = []
         routes = []; routeError = nil
     }
 
     func clearArrival() {
-        selectedArrival = nil; arrivalQuery = ""; arrivalResults = []
+        selectedArrival    = nil
+        arrivalQuery       = ""
+        arrivalCompletions = []
         routes = []; routeError = nil
     }
 
@@ -131,7 +185,6 @@ final class ManualTripViewModel: NSObject, ObservableObject {
 
     func tryCalculateRoute() {
         guard let from = selectedDeparture, let to = selectedArrival else { return }
-
         isLoadingRoute = true
         routeError     = nil
         routes         = []
@@ -142,16 +195,13 @@ final class ManualTripViewModel: NSObject, ObservableObject {
         request.transportType           = .automobile
         request.requestsAlternateRoutes = true
 
-        // Retain strongly — inline creation would be deallocated before callback fires
         let dir = MKDirections(request: request)
         directions = dir
         dir.calculate { [weak self] response, error in
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.isLoadingRoute = false
-                if let error {
-                    self.routeError = error.localizedDescription; return
-                }
+                if let error { self.routeError = error.localizedDescription; return }
                 self.routes = (response?.routes ?? [])
                     .sorted { $0.expectedTravelTime < $1.expectedTravelTime }
                 self.selectedRouteIndex = 0
@@ -161,9 +211,7 @@ final class ManualTripViewModel: NSObject, ObservableObject {
 
     // MARK: - Current location as departure
 
-    /// Demande la position courante (one-shot) et la définit comme point de départ.
     func fetchCurrentLocationAsDeparture() {
-        // Si on a déjà une valeur récente dans LocationManager, on l'utilise directement
         if let loc = LocationManager.shared.currentLocation {
             reverseGeocode(loc); return
         }
@@ -171,7 +219,7 @@ final class ManualTripViewModel: NSObject, ObservableObject {
         let mgr = CLLocationManager()
         mgr.delegate = self
         mgr.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        oneShotManager = mgr          // retain
+        oneShotManager = mgr
         if mgr.authorizationStatus == .notDetermined {
             mgr.requestWhenInUseAuthorization()
         } else {
@@ -230,44 +278,7 @@ final class ManualTripViewModel: NSObject, ObservableObject {
         isSaved = true
     }
 
-    // MARK: - Private
-
-    private func scheduleSearch(query: String, isDeparture: Bool) {
-        searchWorkItem?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            self?.performSearch(query: query, isDeparture: isDeparture)
-        }
-        searchWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
-    }
-
-    private func performSearch(query: String, isDeparture: Bool) {
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = query
-        request.resultTypes = [.address, .pointOfInterest]
-
-        // Centrer la recherche sur la position courante pour obtenir plus de résultats pertinents
-        if let loc = LocationManager.shared.currentLocation {
-            request.region = MKCoordinateRegion(
-                center: loc.coordinate,
-                latitudinalMeters: 100_000,
-                longitudinalMeters: 100_000
-            )
-        }
-
-        // Retain strongly — same reason as MKDirections
-        let search = MKLocalSearch(request: request)
-        if isDeparture { departureSearch = search }
-        else           { arrivalSearch   = search }
-
-        search.start { [weak self] response, _ in
-            DispatchQueue.main.async {
-                let items = Array((response?.mapItems ?? []).prefix(5))
-                if isDeparture { self?.departureResults = items }
-                else           { self?.arrivalResults   = items }
-            }
-        }
-    }
+    // MARK: - Helpers
 
     private func combinedDate(_ date: Date, _ time: Date) -> Date {
         let cal = Calendar.current
@@ -278,11 +289,30 @@ final class ManualTripViewModel: NSObject, ObservableObject {
     }
 }
 
+// MARK: - MKLocalSearchCompleterDelegate
+
+extension ManualTripViewModel: MKLocalSearchCompleterDelegate {
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        let results = Array(completer.results.prefix(5))
+        DispatchQueue.main.async {
+            if completer === self.departureCompleter {
+                self.departureCompletions = results
+            } else {
+                self.arrivalCompletions = results
+            }
+        }
+    }
+
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        // Silencieux — l'utilisateur peut continuer à taper
+    }
+}
+
 // MARK: - CLLocationManagerDelegate
 
 extension ManualTripViewModel: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        oneShotManager = nil          // libère après usage
+        oneShotManager = nil
         guard let loc = locations.last else { isLocating = false; return }
         reverseGeocode(loc)
     }

@@ -112,39 +112,39 @@ struct ManualTripView: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 14)
 
-            // Dropdown départ — à l'intérieur de la carte, sans hauteur fixe
-            if focusedField == .departure && !vm.departureResults.isEmpty {
+            // Dropdown départ
+            if focusedField == .departure && !vm.departureCompletions.isEmpty {
                 Divider().background(Color.white.opacity(0.12))
-                resultsDropdown(items: vm.departureResults) { item in
+                resultsDropdown(completions: vm.departureCompletions) { completion in
                     focusedField = nil
-                    vm.selectDeparture(item)
+                    vm.selectDeparture(completion: completion)
                 }
             }
 
             // Dropdown arrivée
-            if focusedField == .arrival && !vm.arrivalResults.isEmpty {
+            if focusedField == .arrival && !vm.arrivalCompletions.isEmpty {
                 Divider().background(Color.white.opacity(0.12))
-                resultsDropdown(items: vm.arrivalResults) { item in
+                resultsDropdown(completions: vm.arrivalCompletions) { completion in
                     focusedField = nil
-                    vm.selectArrival(item)
+                    vm.selectArrival(completion: completion)
                 }
             }
         }
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
         .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
         .animation(.easeInOut(duration: 0.18), value: focusedField)
-        .animation(.easeInOut(duration: 0.18), value: vm.departureResults.count)
-        .animation(.easeInOut(duration: 0.18), value: vm.arrivalResults.count)
+        .animation(.easeInOut(duration: 0.18), value: vm.departureCompletions.count)
+        .animation(.easeInOut(duration: 0.18), value: vm.arrivalCompletions.count)
     }
 
     // MARK: - Results dropdown
 
-    private func resultsDropdown(items: [MKMapItem],
-                                 onSelect: @escaping (MKMapItem) -> Void) -> some View {
+    private func resultsDropdown(completions: [MKLocalSearchCompletion],
+                                 onSelect: @escaping (MKLocalSearchCompletion) -> Void) -> some View {
         VStack(spacing: 0) {
-            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+            ForEach(Array(completions.enumerated()), id: \.offset) { idx, completion in
                 Button {
-                    onSelect(item)
+                    onSelect(completion)
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "mappin.circle.fill")
@@ -152,13 +152,12 @@ struct ManualTripView: View {
                             .foregroundColor(.appCyan)
                             .frame(width: 22)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(item.name ?? "")
+                            Text(completion.title)
                                 .font(.subheadline)
                                 .foregroundColor(.white)
                                 .lineLimit(1)
-                            if let sub = item.placemark.title,
-                               !sub.isEmpty, sub != item.name {
-                                Text(sub)
+                            if !completion.subtitle.isEmpty {
+                                Text(completion.subtitle)
                                     .font(.caption2)
                                     .foregroundColor(.white.opacity(0.45))
                                     .lineLimit(1)
@@ -175,7 +174,7 @@ struct ManualTripView: View {
                 }
                 .buttonStyle(.plain)
 
-                if idx < items.count - 1 {
+                if idx < completions.count - 1 {
                     Divider()
                         .background(Color.white.opacity(0.06))
                         .padding(.leading, 50)
