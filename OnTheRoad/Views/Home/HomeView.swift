@@ -8,6 +8,7 @@ struct HomeView: View {
     @State private var navigateToStats = false
     @State private var navigateToExport = false
     @State private var navigateToDeclare = false
+    @State private var navigateToManualTrip = false
 
     var body: some View {
         NavigationStack {
@@ -25,6 +26,8 @@ struct HomeView: View {
                     Spacer()
 
                     startButton
+
+                    manualTripButton
 
                     Spacer()
 
@@ -50,6 +53,10 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $navigateToDeclare) {
                 MileageDeclarationView()
+            }
+            .navigationDestination(isPresented: $navigateToManualTrip) {
+                ManualTripView()
+                    .onDisappear { vm.refresh() }
             }
         }
         .onAppear { vm.refresh() }
@@ -138,6 +145,26 @@ struct HomeView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Manual trip button
+
+    private var manualTripButton: some View {
+        Button { navigateToManualTrip = true } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "map")
+                    .font(.subheadline)
+                Text("Saisir un trajet manuellement")
+                    .font(.subheadline)
+            }
+            .foregroundColor(.white.opacity(0.6))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.1), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 16)
     }
 
     // MARK: - Bottom nav
