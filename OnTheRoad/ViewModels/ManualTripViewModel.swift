@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreData
+import Combine
 
 final class ManualTripViewModel: ObservableObject {
 
