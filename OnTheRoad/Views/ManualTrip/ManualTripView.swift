@@ -5,6 +5,10 @@ struct ManualTripView: View {
     @StateObject private var vm = ManualTripViewModel()
     @Environment(\.dismiss) private var dismiss
 
+    // FocusState — fiable sur TextField, contrairement à onTapGesture
+    @FocusState private var focusedField: AddressField?
+    enum AddressField: Hashable { case departure, arrival }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.appBackground.ignoresSafeArea()
@@ -17,42 +21,21 @@ struct ManualTripView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
-
-                        // Address inputs
                         addressCard
-
-                        // Map
-                        if vm.selectedDeparture != nil || vm.selectedArrival != nil {
-                            mapCard
-                        }
-
-                        // Loading
-                        if vm.isLoadingRoute {
-                            loadingCard
-                        }
-
-                        // Error
-                        if let err = vm.routeError {
-                            errorCard(err)
-                        }
-
-                        // Route selection + info
+                        if vm.selectedDeparture != nil || vm.selectedArrival != nil { mapCard }
+                        if vm.isLoadingRoute    { loadingCard }
+                        if let err = vm.routeError { errorCard(err) }
                         if !vm.routes.isEmpty {
                             if vm.routes.count > 1 { routePickerCard }
                             routeInfoCard
                         }
-
-                        // Trip details
-                        if vm.selectedRoute != nil {
-                            detailsCard
-                        }
+                        if vm.selectedRoute != nil { detailsCard }
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, vm.canSave ? 100 : 32)
                 }
             }
 
-            // Save button — floats above content
             if vm.canSave {
                 saveButton
                     .padding(.horizontal, 20)
@@ -61,6 +44,8 @@ struct ManualTripView: View {
         }
         .navigationBarHidden(true)
         .onChange(of: vm.isSaved) { _, saved in if saved { dismiss() } }
+        // Ferme le clavier si on tape en dehors des champs
+        .onTapGesture { focusedField = nil }
     }
 
     // MARK: - Header
@@ -75,8 +60,7 @@ struct ManualTripView: View {
             }
             .buttonStyle(.plain)
             Spacer()
-            Text("Trajet manuel")
-                .font(.title3.bold()).foregroundColor(.white)
+            Text("Trajet manuel").font(.title3.bold()).foregroundColor(.white)
             Spacer()
             Color.clear.frame(width: 40, height: 40)
         }
@@ -86,109 +70,103 @@ struct ManualTripView: View {
 
     private var addressCard: some View {
         VStack(spacing: 0) {
-            // Departure
-            addressField(
-                icon:        "flag.fill",
-                iconColor:   .appGreen,
-                placeholder: "Adresse de départ",
-                text:        $vm.departureQuery,
-                isFocused:   vm.searchFocus == .departure,
-                onFocus:     { vm.searchFocus = .departure },
-                onClear:     { vm.clearDeparture() },
-                onChange:    { vm.onDepartureQueryChange($0) },
-                results:     vm.departureResults,
-                onSelect:    { vm.selectDeparture($0) }
-            )
-
+            departureFieldSection
             Divider().background(Color.white.opacity(0.08))
-
-            // Arrival
-            addressField(
-                icon:        "flag.checkered",
-                iconColor:   .appPink,
-                placeholder: "Adresse d'arrivée",
-                text:        $vm.arrivalQuery,
-                isFocused:   vm.searchFocus == .arrival,
-                onFocus:     { vm.searchFocus = .arrival },
-                onClear:     { vm.clearArrival() },
-                onChange:    { vm.onArrivalQueryChange($0) },
-                results:     vm.arrivalResults,
-                onSelect:    { vm.selectArrival($0) }
-            )
+            arrivalFieldSection
         }
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
         .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
     }
 
-    private func addressField(
-        icon: String,
-        iconColor: Color,
-        placeholder: String,
-        text: Binding<String>,
-        isFocused: Bool,
-        onFocus: @escaping () -> Void,
-        onClear: @escaping () -> Void,
-        onChange: @escaping (String) -> Void,
-        results: [MKMapItem],
-        onSelect: @escaping (MKMapItem) -> Void
-    ) -> some View {
+    // MARK: Departure field + results
+
+    private var departureFieldSection: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(iconColor)
-                    .frame(width: 20)
-
-                TextField(placeholder, text: text)
-                    .foregroundColor(.white)
-                    .tint(.appCyan)
-                    .font(.subheadline)
-                    .submitLabel(.search)
-                    .onTapGesture { onFocus() }
-                    .onChange(of: text.wrappedValue) { _, val in onChange(val) }
-
-                if !text.wrappedValue.isEmpty {
-                    Button { onClear() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.white.opacity(0.35))
+                Image(systemName: "flag.fill")
+                    .foregroundColor(.appGreen).frame(width: 20)
+                TextField("Adresse de départ", text: $vm.departureQuery)
+                    .foregroundColor(.white).tint(.appCyan).font(.subheadline)
+                    .focused($focusedField, equals: .departure)
+                    .onChange(of: vm.departureQuery) { _, val in
+                        vm.onDepartureQueryChange(val)
                     }
-                    .buttonStyle(.plain)
+                if !vm.departureQuery.isEmpty {
+                    Button { vm.clearDeparture(); focusedField = .departure } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundColor(.white.opacity(0.35))
+                    }.buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 16).padding(.vertical, 14)
 
-            // Inline results
-            if isFocused && !results.isEmpty {
+            if focusedField == .departure && !vm.departureResults.isEmpty {
                 Divider().background(Color.white.opacity(0.06))
-                VStack(spacing: 0) {
-                    ForEach(results, id: \.self) { item in
-                        Button {
-                            onSelect(item)
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "mappin")
-                                    .font(.caption)
-                                    .foregroundColor(.appCyan)
-                                    .frame(width: 16)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.name ?? "")
-                                        .font(.subheadline)
-                                        .foregroundColor(.white)
-                                    if let sub = item.placemark.title, sub != item.name {
-                                        Text(sub)
-                                            .font(.caption2)
-                                            .foregroundColor(.white.opacity(0.45))
-                                            .lineLimit(1)
-                                    }
-                                }
-                                Spacer()
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                        }
-                        .buttonStyle(.plain)
-                        if item !== results.last { Divider().background(Color.white.opacity(0.05)).padding(.leading, 42) }
+                resultsList(items: vm.departureResults) { item in
+                    focusedField = nil
+                    vm.selectDeparture(item)
+                }
+            }
+        }
+    }
+
+    // MARK: Arrival field + results
+
+    private var arrivalFieldSection: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "flag.checkered")
+                    .foregroundColor(.appPink).frame(width: 20)
+                TextField("Adresse d'arrivée", text: $vm.arrivalQuery)
+                    .foregroundColor(.white).tint(.appCyan).font(.subheadline)
+                    .focused($focusedField, equals: .arrival)
+                    .onChange(of: vm.arrivalQuery) { _, val in
+                        vm.onArrivalQueryChange(val)
                     }
+                if !vm.arrivalQuery.isEmpty {
+                    Button { vm.clearArrival(); focusedField = .arrival } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundColor(.white.opacity(0.35))
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+
+            if focusedField == .arrival && !vm.arrivalResults.isEmpty {
+                Divider().background(Color.white.opacity(0.06))
+                resultsList(items: vm.arrivalResults) { item in
+                    focusedField = nil
+                    vm.selectArrival(item)
+                }
+            }
+        }
+    }
+
+    // MARK: Results list
+
+    private func resultsList(items: [MKMapItem], onSelect: @escaping (MKMapItem) -> Void) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                Button { onSelect(item) } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "mappin")
+                            .font(.caption).foregroundColor(.appCyan).frame(width: 16)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.name ?? "")
+                                .font(.subheadline).foregroundColor(.white)
+                                .lineLimit(1)
+                            if let sub = item.placemark.title, sub != item.name {
+                                Text(sub)
+                                    .font(.caption2).foregroundColor(.white.opacity(0.45))
+                                    .lineLimit(1)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                if idx < items.count - 1 {
+                    Divider().background(Color.white.opacity(0.05)).padding(.leading, 42)
                 }
             }
         }
@@ -204,8 +182,7 @@ struct ManualTripView: View {
         )
         .frame(height: 220)
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(RoundedRectangle(cornerRadius: 20)
-            .stroke(Color.white.opacity(0.1), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
     }
 
     // MARK: - Loading / error
@@ -213,8 +190,7 @@ struct ManualTripView: View {
     private var loadingCard: some View {
         HStack(spacing: 12) {
             ProgressView().tint(.appCyan)
-            Text("Calcul de l'itinéraire…")
-                .font(.subheadline).foregroundColor(.white.opacity(0.6))
+            Text("Calcul de l'itinéraire…").font(.subheadline).foregroundColor(.white.opacity(0.6))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -223,9 +199,19 @@ struct ManualTripView: View {
     }
 
     private func errorCard(_ message: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.appOrange)
-            Text(message).font(.subheadline).foregroundColor(.white.opacity(0.7))
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.appOrange)
+                Text(message).font(.subheadline).foregroundColor(.white.opacity(0.7))
+            }
+            Button { vm.tryCalculateRoute() } label: {
+                Text("Réessayer")
+                    .font(.subheadline.bold())
+                    .foregroundColor(Color.appBackground)
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(Color.appOrange, in: RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -233,18 +219,16 @@ struct ManualTripView: View {
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.appOrange.opacity(0.3), lineWidth: 1))
     }
 
-    // MARK: - Route picker (multiple alternatives)
+    // MARK: - Route picker
 
     private var routePickerCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Itinéraires disponibles")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.5))
-
+                .font(.caption).foregroundColor(.white.opacity(0.5))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(vm.routes.indices, id: \.self) { i in
-                        let route = vm.routes[i]
+                        let route    = vm.routes[i]
                         let selected = i == vm.selectedRouteIndex
                         Button { vm.selectedRouteIndex = i } label: {
                             VStack(spacing: 4) {
@@ -258,8 +242,7 @@ struct ManualTripView: View {
                                     .font(.caption2)
                                     .foregroundColor(selected ? Color.appBackground.opacity(0.7) : .white.opacity(0.55))
                             }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
+                            .padding(.horizontal, 14).padding(.vertical, 10)
                             .background(selected ? Color.appCyan : Color.white.opacity(0.07),
                                         in: RoundedRectangle(cornerRadius: 12))
                         }
@@ -299,22 +282,19 @@ struct ManualTripView: View {
 
     private var detailsCard: some View {
         VStack(spacing: 0) {
-            // Date (today or past)
+            // Date
             detailRow {
                 HStack(spacing: 10) {
                     Image(systemName: "calendar").foregroundColor(.appCyan).frame(width: 20)
                     Text("Date").font(.subheadline).foregroundColor(.white.opacity(0.7))
                     Spacer()
                     DatePicker("", selection: $vm.tripDate, in: ...Date(), displayedComponents: .date)
-                        .labelsHidden()
-                        .colorScheme(.dark)
-                        .tint(.appCyan)
+                        .labelsHidden().colorScheme(.dark).tint(.appCyan)
                 }
             }
-
             Divider().background(Color.white.opacity(0.07))
 
-            // Time mode toggle
+            // Time mode
             detailRow {
                 HStack(spacing: 10) {
                     Image(systemName: "clock").foregroundColor(.appCyan).frame(width: 20)
@@ -323,14 +303,12 @@ struct ManualTripView: View {
                             Text($0.rawValue).tag($0)
                         }
                     }
-                    .pickerStyle(.segmented)
-                    .colorScheme(.dark)
+                    .pickerStyle(.segmented).colorScheme(.dark)
                 }
             }
-
             Divider().background(Color.white.opacity(0.07))
 
-            // Time picker
+            // Anchor time
             detailRow {
                 HStack(spacing: 10) {
                     Image(systemName: vm.timeMode == .departure ? "play.circle" : "stop.circle")
@@ -340,12 +318,9 @@ struct ManualTripView: View {
                         .font(.subheadline).foregroundColor(.white.opacity(0.7))
                     Spacer()
                     DatePicker("", selection: $vm.anchorTime, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                        .colorScheme(.dark)
-                        .tint(.appCyan)
+                        .labelsHidden().colorScheme(.dark).tint(.appCyan)
                 }
             }
-
             Divider().background(Color.white.opacity(0.07))
 
             // Computed other time (read-only)
@@ -361,7 +336,6 @@ struct ManualTripView: View {
                         .font(.subheadline.bold()).foregroundColor(.appCyan)
                 }
             }
-
             Divider().background(Color.white.opacity(0.07))
 
             // Motif
@@ -369,12 +343,9 @@ struct ManualTripView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "text.bubble").foregroundColor(.appCyan).frame(width: 20)
                     TextField("Motif (optionnel)", text: $vm.motif)
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                        .tint(.appCyan)
+                        .font(.subheadline).foregroundColor(.white).tint(.appCyan)
                 }
             }
-
             Divider().background(Color.white.opacity(0.07))
 
             // Project
@@ -405,9 +376,7 @@ struct ManualTripView: View {
     }
 
     private func detailRow<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+        content().padding(.horizontal, 16).padding(.vertical, 14)
     }
 
     // MARK: - Save button
@@ -416,13 +385,10 @@ struct ManualTripView: View {
         Button { vm.save() } label: {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
-                Text("Enregistrer le trajet")
-                    .font(.headline)
+                Text("Enregistrer le trajet").font(.headline)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 17)
-            .background(Color.appCyan)
-            .cornerRadius(18)
+            .frame(maxWidth: .infinity).padding(.vertical, 17)
+            .background(Color.appCyan).cornerRadius(18)
             .foregroundColor(Color.appBackground)
         }
         .buttonStyle(.plain)

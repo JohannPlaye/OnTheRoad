@@ -1,7 +1,6 @@
 import SwiftUI
 import MapKit
 import CoreData
-import Combine
 
 final class ManualTripViewModel: ObservableObject {
 
@@ -13,9 +12,6 @@ final class ManualTripViewModel: ObservableObject {
     @Published var arrivalResults:   [MKMapItem] = []
     @Published var selectedDeparture: MKMapItem?
     @Published var selectedArrival:   MKMapItem?
-    @Published var searchFocus: SearchFocus = .none
-
-    enum SearchFocus { case none, departure, arrival }
 
     // MARK: - Route
 
@@ -33,9 +29,9 @@ final class ManualTripViewModel: ObservableObject {
 
     @Published var motif = ""
     @Published var selectedProject: TripProject?
-    @Published var tripDate  = Date()          // calendar day
+    @Published var tripDate  = Date()
     @Published var timeMode: TimeMode = .departure
-    @Published var anchorTime = Date()          // the time the user controls
+    @Published var anchorTime = Date()
 
     enum TimeMode: String, CaseIterable {
         case departure = "Départ"
@@ -75,10 +71,13 @@ final class ManualTripViewModel: ObservableObject {
     @Published var isSaved = false
     var canSave: Bool { selectedRoute != nil && selectedProject != nil }
 
-    // MARK: - Private
+    // MARK: - Private — retain MKLocalSearch & MKDirections strongly
 
     private let context = PersistenceController.shared.container.viewContext
-    private var searchWorkItem: DispatchWorkItem?
+    private var departureSearch: MKLocalSearch?
+    private var arrivalSearch:   MKLocalSearch?
+    private var directions:      MKDirections?
+    private var searchWorkItem:  DispatchWorkItem?
 
     private let timeFormatter: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "HH:mm"; return f
@@ -87,28 +86,26 @@ final class ManualTripViewModel: ObservableObject {
     // MARK: - Search
 
     func onDepartureQueryChange(_ query: String) {
-        guard !query.isEmpty else { departureResults = []; return }
-        scheduleSearch(query: query, focus: .departure)
+        if query.isEmpty { departureResults = []; return }
+        scheduleSearch(query: query, isDeparture: true)
     }
 
     func onArrivalQueryChange(_ query: String) {
-        guard !query.isEmpty else { arrivalResults = []; return }
-        scheduleSearch(query: query, focus: .arrival)
+        if query.isEmpty { arrivalResults = []; return }
+        scheduleSearch(query: query, isDeparture: false)
     }
 
     func selectDeparture(_ item: MKMapItem) {
-        selectedDeparture  = item
-        departureQuery     = item.name ?? item.placemark.title ?? ""
-        departureResults   = []
-        searchFocus        = .none
+        selectedDeparture = item
+        departureQuery    = item.name ?? item.placemark.title ?? ""
+        departureResults  = []
         tryCalculateRoute()
     }
 
     func selectArrival(_ item: MKMapItem) {
-        selectedArrival  = item
-        arrivalQuery     = item.name ?? item.placemark.title ?? ""
-        arrivalResults   = []
-        searchFocus      = .none
+        selectedArrival = item
+        arrivalQuery    = item.name ?? item.placemark.title ?? ""
+        arrivalResults  = []
         tryCalculateRoute()
     }
 
@@ -126,25 +123,30 @@ final class ManualTripViewModel: ObservableObject {
 
     func tryCalculateRoute() {
         guard let from = selectedDeparture, let to = selectedArrival else { return }
+
         isLoadingRoute = true
         routeError     = nil
         routes         = []
 
-        let request          = MKDirections.Request()
-        request.source       = from
-        request.destination  = to
+        let request = MKDirections.Request()
+        request.source                  = from
+        request.destination             = to
         request.transportType           = .automobile
         request.requestsAlternateRoutes = true
 
-        MKDirections(request: request).calculate { [weak self] response, error in
+        // Retain strongly — inline creation would be deallocated before callback fires
+        let dir = MKDirections(request: request)
+        directions = dir
+        dir.calculate { [weak self] response, error in
             DispatchQueue.main.async {
-                self?.isLoadingRoute = false
+                guard let self else { return }
+                self.isLoadingRoute = false
                 if let error {
-                    self?.routeError = error.localizedDescription; return
+                    self.routeError = error.localizedDescription; return
                 }
-                let sorted = (response?.routes ?? []).sorted { $0.expectedTravelTime < $1.expectedTravelTime }
-                self?.routes = sorted
-                self?.selectedRouteIndex = 0
+                self.routes = (response?.routes ?? [])
+                    .sorted { $0.expectedTravelTime < $1.expectedTravelTime }
+                self.selectedRouteIndex = 0
             }
         }
     }
@@ -161,14 +163,14 @@ final class ManualTripViewModel: ObservableObject {
         let end   = arrivalDateTime
 
         let trip = Trip(context: context)
-        trip.id              = UUID()
-        trip.date            = start
-        trip.startTime       = start
-        trip.endTime         = end
-        trip.distance        = route.distance / 1000
-        trip.motif           = motif.trimmingCharacters(in: .whitespaces).isEmpty ? nil : motif
-        trip.project         = selectedProject?.rawValue
-        trip.gpsPointsData   = coords.encoded()
+        trip.id            = UUID()
+        trip.date          = start
+        trip.startTime     = start
+        trip.endTime       = end
+        trip.distance      = route.distance / 1000
+        trip.motif         = motif.trimmingCharacters(in: .whitespaces).isEmpty ? nil : motif
+        trip.project       = selectedProject?.rawValue
+        trip.gpsPointsData = coords.encoded()
 
         if let first = coords.first {
             trip.startLatitude  = first.latitude
@@ -183,36 +185,40 @@ final class ManualTripViewModel: ObservableObject {
         isSaved = true
     }
 
-    // MARK: - Private helpers
+    // MARK: - Private
 
-    private func scheduleSearch(query: String, focus: SearchFocus) {
+    private func scheduleSearch(query: String, isDeparture: Bool) {
         searchWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            self?.performSearch(query: query, focus: focus)
+            self?.performSearch(query: query, isDeparture: isDeparture)
         }
         searchWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
-    private func performSearch(query: String, focus: SearchFocus) {
+    private func performSearch(query: String, isDeparture: Bool) {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
-        MKLocalSearch(request: request).start { [weak self] response, _ in
+
+        // Retain strongly — same reason as MKDirections
+        let search = MKLocalSearch(request: request)
+        if isDeparture { departureSearch = search }
+        else           { arrivalSearch   = search }
+
+        search.start { [weak self] response, _ in
             DispatchQueue.main.async {
-                let items = response?.mapItems ?? []
-                if focus == .departure { self?.departureResults = Array(items.prefix(5)) }
-                else                  { self?.arrivalResults   = Array(items.prefix(5)) }
+                let items = Array((response?.mapItems ?? []).prefix(6))
+                if isDeparture { self?.departureResults = items }
+                else           { self?.arrivalResults   = items }
             }
         }
     }
 
     private func combinedDate(_ date: Date, _ time: Date) -> Date {
         let cal = Calendar.current
-        var comps      = cal.dateComponents([.year, .month, .day], from: date)
-        let timeComps  = cal.dateComponents([.hour, .minute], from: time)
-        comps.hour   = timeComps.hour
-        comps.minute = timeComps.minute
-        comps.second = 0
+        var comps     = cal.dateComponents([.year, .month, .day], from: date)
+        let timeComps = cal.dateComponents([.hour, .minute], from: time)
+        comps.hour = timeComps.hour; comps.minute = timeComps.minute; comps.second = 0
         return cal.date(from: comps) ?? date
     }
 }
