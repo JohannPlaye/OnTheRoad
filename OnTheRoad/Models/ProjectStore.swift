@@ -1,6 +1,7 @@
 import Foundation
 import CoreData
 import Combine
+import SwiftUI
 
 /// Source de vérité pour la liste des projets utilisateur.
 /// Persistance via UserDefaults. Renommage avec cascade CoreData sur les Trip existants.
