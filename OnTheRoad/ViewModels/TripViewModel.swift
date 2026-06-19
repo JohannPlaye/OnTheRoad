@@ -12,7 +12,7 @@ final class TripViewModel: ObservableObject {
     @Published var showSummaryModal = false
     @Published var showFireworks = false
     @Published var motif = ""
-    @Published var selectedProject: TripProject? = nil
+    @Published var selectedProject: String? = nil
     @Published var elapsedSeconds: Int = 0
 
     let locationManager = LocationManager.shared
@@ -67,7 +67,7 @@ final class TripViewModel: ObservableObject {
         trip.endTime     = end
         trip.distance    = savedDistance
         trip.motif       = motif.trimmingCharacters(in: .whitespaces).isEmpty ? nil : motif
-        trip.project     = selectedProject?.rawValue
+        trip.project     = selectedProject
         trip.gpsPointsData = savedPoints.encoded()
 
         if let first = savedPoints.first {

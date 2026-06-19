@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var navigateToExport = false
     @State private var navigateToDeclare = false
     @State private var navigateToManualTrip = false
+    @State private var navigateToProjects   = false
 
     var body: some View {
         NavigationStack {
@@ -58,6 +59,9 @@ struct HomeView: View {
                 ManualTripView()
                     .onDisappear { vm.refresh() }
             }
+            .navigationDestination(isPresented: $navigateToProjects) {
+                ProjectsView()
+            }
         }
         .onAppear { vm.refresh() }
     }
@@ -75,9 +79,17 @@ struct HomeView: View {
                     .foregroundColor(.white.opacity(0.45))
             }
             Spacer()
-            Image(systemName: "car.fill")
-                .font(.title2)
-                .foregroundColor(.appGreen)
+            Menu {
+                Button {
+                    navigateToProjects = true
+                } label: {
+                    Label("Mes projets", systemImage: "folder.fill")
+                }
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.title2)
+                    .foregroundColor(.appGreen)
+            }
         }
     }
 

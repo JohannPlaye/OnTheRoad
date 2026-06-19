@@ -197,8 +197,8 @@ struct TripDetailView: View {
 
             if isEditingProject {
                 Menu {
-                    ForEach(TripProject.allCases) { p in
-                        Button(p.rawValue) {
+                    ForEach(ProjectStore.shared.projects, id: \.self) { p in
+                        Button(p) {
                             vm.saveProject(p)
                             isEditingProject = false
                         }

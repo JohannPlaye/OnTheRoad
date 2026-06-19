@@ -1,13 +1,2 @@
-import Foundation
-
-enum TripProject: String, CaseIterable, Identifiable {
-    case arboCidre    = "Arbo cidre"
-    case arboVendee   = "Arbo Vendée"
-    case climaTerra   = "ClimaTerra"
-    case dephy        = "Dephy"
-    case efea         = "Efea"
-    case groupe30000  = "Groupe 30 000"
-    case reunionEquipe = "Réunion équipe"
-
-    var id: String { rawValue }
-}
+// TripProject.swift — remplacé par ProjectStore (UserDefaults dynamique).
+// Ce fichier est conservé vide pour ne pas casser le build Xcode si référencé dans le .pbxproj.

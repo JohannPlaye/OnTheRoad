@@ -30,7 +30,7 @@ final class ManualTripViewModel: NSObject, ObservableObject {
     // MARK: - Trip details
 
     @Published var motif = ""
-    @Published var selectedProject: TripProject?
+    @Published var selectedProject: String?
     @Published var tripDate   = Date()
     @Published var timeMode: TimeMode = .departure
     @Published var anchorTime = Date()
@@ -262,7 +262,7 @@ final class ManualTripViewModel: NSObject, ObservableObject {
         trip.endTime       = end
         trip.distance      = route.distance / 1000
         trip.motif         = motif.trimmingCharacters(in: .whitespaces).isEmpty ? nil : motif
-        trip.project       = selectedProject?.rawValue
+        trip.project       = selectedProject
         trip.gpsPointsData = coords.encoded()
 
         if let first = coords.first {

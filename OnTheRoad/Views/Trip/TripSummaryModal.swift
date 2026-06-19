@@ -59,14 +59,14 @@ struct TripSummaryModal: View {
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.5))
                     Menu {
-                        ForEach(TripProject.allCases) { project in
-                            Button(project.rawValue) {
+                        ForEach(ProjectStore.shared.projects, id: \.self) { project in
+                            Button(project) {
                                 vm.selectedProject = project
                             }
                         }
                     } label: {
                         HStack {
-                            Text(vm.selectedProject?.rawValue ?? "Sélectionner un projet…")
+                            Text(vm.selectedProject ?? "Sélectionner un projet…")
                                 .foregroundColor(vm.selectedProject == nil ? .white.opacity(0.35) : .white)
                                 .font(.subheadline)
                             Spacer()

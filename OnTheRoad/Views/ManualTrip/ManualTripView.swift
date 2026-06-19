@@ -367,12 +367,12 @@ struct ManualTripView: View {
                         .font(.subheadline).foregroundColor(.white.opacity(0.7))
                     Spacer()
                     Menu {
-                        ForEach(TripProject.allCases) { p in
-                            Button(p.rawValue) { vm.selectedProject = p }
+                        ForEach(ProjectStore.shared.projects, id: \.self) { p in
+                            Button(p) { vm.selectedProject = p }
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Text(vm.selectedProject?.rawValue ?? "Sélectionner…")
+                            Text(vm.selectedProject ?? "Sélectionner…")
                                 .font(.subheadline)
                                 .foregroundColor(vm.selectedProject == nil ? .white.opacity(0.35) : .white)
                             Image(systemName: "chevron.up.chevron.down")

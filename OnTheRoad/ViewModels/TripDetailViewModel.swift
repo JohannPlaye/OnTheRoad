@@ -21,8 +21,8 @@ final class TripDetailViewModel: ObservableObject {
         objectWillChange.send()
     }
 
-    func saveProject(_ project: TripProject?) {
-        trip.project = project?.rawValue
+    func saveProject(_ project: String?) {
+        trip.project = project
         try? context.save()
         objectWillChange.send()
     }
